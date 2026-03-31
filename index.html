@@ -24,44 +24,59 @@
     }
 
     /* Barra superior tipo sistema */
-    header {
-      background: #ffffff;
-      color: #333;
-      padding: 5px 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #ccc;
-    }
+   header {
+  background-image: url('img/header.jpg'); /* TU IMAGEN */
+  background-size: cover;
+  background-position: center;
+  height: 65px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid #ccc;
+  position: relative;
+}
 
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
+/* capa oscura leve para que el texto se vea */
+header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.75);
+}
 
-    .logo-area h1 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--tel-red);
-    }
+/* contenido por encima */
+.header-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-    .profile-switcher {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
+.header-left {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e30613;
+}
 
-    .profile-switcher select {
-      background: white;
-      color: var(--tel-red);
-      border: 1px solid #ccc;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 11px;
+.profile-switcher {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.profile-switcher select {
+  background: white;
+  color: #e30613;
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 11px;
+}
     }
 
     /* Contenedor principal tipo módulo Teleton */
@@ -373,18 +388,22 @@
 <body>
 
 <header>
-  <div class="logo-area">
-    <img src="img/Sin título.jpg"
-         alt="Módulo sistema"
-         style="height:200px;width:200px">
-    <h1>Control de Archivo Clínico - Teletón</h1>
-  </div>
-  <div class="profile-switcher">
-    <label style="font-size:10px; font-weight:bold; margin-right:5px">CAMBIAR PERFIL:</label>
-    <select id="profileSelect" onchange="cambiarPerfil()">
-      <option value="solicitante">Médico Solicitante</option>
-      <option value="admin">Administrador Archivo</option>
-    </select>
+  <div class="header-content">
+
+    <div class="header-left">
+      Control de Archivo Clínico - Teletón
+    </div>
+
+    <div class="profile-switcher">
+      <label style="font-size:10px; font-weight:bold;">
+        CAMBIAR PERFIL:
+      </label>
+      <select id="profileSelect" onchange="cambiarPerfil()">
+        <option value="solicitante">Médico Solicitante</option>
+        <option value="admin">Administrador Archivo</option>
+      </select>
+    </div>
+
   </div>
 </header>
 
