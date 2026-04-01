@@ -83,6 +83,97 @@
     .print-content { background: white; padding: 30px; border-radius: 8px; width: 500px; text-align: center; }
     .label-preview { border: 2px dashed #ccc; padding: 15px; margin: 15px 0; background: #fafafa; display: flex; flex-direction: column; gap: 10px; }
     .barcode-sim { height: 40px; background: repeating-linear-gradient(90deg, #000, #000 2px, #fff 2px, #fff 4px); width: 80%; margin: 0 auto; }
+
+    /* ── ESTILOS NUEVO MODAL CARGA DE DOCUMENTOS ── */
+    .modal-carga-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: none; justify-content: center; align-items: center; z-index: 1000;
+    }
+    .modal-carga-box {
+      background: white; width: 620px; border-radius: 6px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.18); overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .modal-carga-header {
+      padding: 20px 24px 14px;
+      border-bottom: 2px solid #e9ecef;
+      font-size: 16px; font-weight: 600; color: #212529;
+    }
+    .modal-carga-body { padding: 0; }
+    .modal-carga-field {
+      padding: 16px 24px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .modal-carga-field label {
+      display: block; font-size: 13px; font-weight: 700;
+      color: #212529; margin-bottom: 8px; text-transform: none; letter-spacing: 0;
+    }
+    .modal-carga-field .mc-select-wrap {
+      position: relative;
+    }
+    .modal-carga-field select,
+    .modal-carga-field input[type="date"] {
+      width: 100%; padding: 9px 36px 9px 12px;
+      font-size: 13px; border: 1px solid #ced4da; border-radius: 4px;
+      color: #212529; background: white; appearance: none;
+      -webkit-appearance: none;
+    }
+    .modal-carga-field .mc-arrow {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: #555; font-size: 12px;
+    }
+    /* Tipo de Documento: searchable con borde rojo */
+    .mc-tipo-wrap {
+      position: relative; display: flex; align-items: center;
+      border: 1.5px solid #e30613; border-radius: 4px; background: white;
+    }
+    .mc-tipo-wrap input[type="text"] {
+      flex: 1; border: none; outline: none; padding: 9px 8px 9px 12px;
+      font-size: 13px; color: #212529; border-radius: 4px;
+    }
+    .mc-tipo-wrap .mc-clear {
+      padding: 0 8px; color: #555; cursor: pointer; font-size: 14px;
+      user-select: none; line-height: 1;
+    }
+    .mc-tipo-wrap .mc-arrow-tipo {
+      padding: 0 10px 0 4px; color: #555; font-size: 12px; cursor: pointer;
+    }
+    .mc-tipo-dropdown {
+      position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+      background: white; border: 1px solid #ced4da; border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 100;
+      display: none; max-height: 160px; overflow-y: auto;
+    }
+    .mc-tipo-dropdown .mc-opt {
+      padding: 9px 14px; font-size: 13px; cursor: pointer; color: #212529;
+    }
+    .mc-tipo-dropdown .mc-opt:hover { background: #f1f3f5; }
+    /* Date input con ícono calendario */
+    .mc-date-wrap { position: relative; }
+    .mc-date-wrap input[type="date"] { padding-right: 40px; }
+    .mc-date-wrap .mc-cal-icon {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: #555; font-size: 15px;
+    }
+    /* Zona de carga de archivo */
+    .modal-carga-upload {
+      padding: 14px 24px; background: #f8f9fa; border-bottom: 1px solid #e9ecef;
+    }
+    .mc-file-btn {
+      display: inline-block; padding: 7px 16px; border: 1px solid #ced4da;
+      border-radius: 4px; background: white; font-size: 13px; color: #212529;
+      cursor: pointer; font-weight: 500;
+    }
+    .mc-file-btn:hover { background: #f1f3f5; }
+    .mc-file-name { margin-left: 12px; font-size: 12px; color: #6c757d; }
+    /* Pie del modal */
+    .modal-carga-footer { padding: 14px 24px; }
+    .mc-btn-cerrar {
+      padding: 7px 18px; border: 1px solid #ced4da; border-radius: 4px;
+      background: white; font-size: 13px; color: #212529; cursor: pointer;
+      font-weight: 500;
+    }
+    .mc-btn-cerrar:hover { background: #f1f3f5; }
   </style>
 </head>
 <body>
@@ -129,7 +220,6 @@
         <div class="form-group"><label>Desde</label><input type="date" id="hDesde"></div>
         <div class="form-group"><label>Hasta</label><input type="date" id="hHasta"></div>
         <div class="form-group"><label>Ficha</label><input type="text" id="hFicha" placeholder="Filtrar..."></div>
-        <!-- NUEVO FILTRO: INSTITUTO -->
         <div class="form-group"><label>Instituto</label><select id="hIT"><option value="TODOS">TODOS LOS IT</option><option value="131">131 - SANTIAGO</option><option value="132">132 - VALPARAÍSO</option><option value="133">133 - CONCEPCIÓN</option><option value="134">134 - ANTOFAGASTA</option></select></div>
         <button class="btn btn-primary" onclick="renderTablas()">Aplicar Filtro</button>
       </div>
@@ -214,7 +304,6 @@
     <div id="adm-pasivas" class="panel">
       <div class="filter-bar">
         <div class="form-group"><label>Ubicación</label><select id="pUbic"><option value="TODAS">TODAS LAS UBICACIONES</option><option value="INSTITUTO">IT SANTIAGO</option><option value="CUSTODIO">CUSTODIO EXTERNO</option></select></div>
-        <!-- NUEVO FILTRO: ESTADO -->
         <div class="form-group"><label>Estado</label><select id="pEstado"><option value="TODOS">TODOS LOS ESTADOS</option><option value="ACTIVO">ACTIVO (En Instituto)</option><option value="PASIVO">PASIVO (En Custodio)</option></select></div>
         <div class="form-group" style="grid-column: span 2;"><label>Criterio (Ficha, RUT o Nombre)</label><input type="text" id="pBusca" placeholder="Ingrese dato de búsqueda..."></div>
         <button class="btn btn-primary" onclick="renderPasivas()">Buscar en Archivo</button>
@@ -227,8 +316,73 @@
   </div>
 </main>
 
+<!-- Modal confirmación solicitud -->
 <div id="modalConfirmacion" class="modal-overlay"><div class="modal-content"><div style="color: #28a745; font-size: 50px;">✓</div><h3>Solicitud Registrada</h3><p>La solicitud se ha enviado al equipo de archivo clínico.</p><button class="btn btn-primary" onclick="cerrarModal('modalConfirmacion')">Entendido</button></div></div>
-<div id="modalDigitalizar" class="modal-overlay"><div class="modal-content"><h3>Procesar Digitalización</h3><p>Suba el archivo PDF resultante del escaneo físico.</p><input type="file" onchange="finalizarCarga()"><br><br><button class="btn btn-secondary" onclick="cerrarModal('modalDigitalizar')">Cancelar</button></div></div>
+
+<!-- ── NUEVO MODAL CARGA DE DOCUMENTOS (reemplaza modalDigitalizar) ── -->
+<div id="modalDigitalizar" class="modal-carga-overlay">
+  <div class="modal-carga-box">
+
+    <div class="modal-carga-header">Carga de Documentos</div>
+
+    <div class="modal-carga-body">
+
+      <!-- Ámbito -->
+      <div class="modal-carga-field">
+        <label>Ámbito</label>
+        <div class="mc-select-wrap">
+          <select id="mcAmbito">
+            <option>Soporte Físico Documental Digitalizado</option>
+            <option>Documento Electrónico Original</option>
+            <option>Registro Administrativo</option>
+          </select>
+          <span class="mc-arrow">▼</span>
+        </div>
+      </div>
+
+      <!-- Tipo de Documento (searchable) -->
+      <div class="modal-carga-field">
+        <label>Tipo de Documento</label>
+        <div class="mc-tipo-wrap" id="mcTipoWrap">
+          <input type="text" id="mcTipoInput" placeholder="Soporte Físico Documental"
+                 oninput="filtrarTipo()" onfocus="abrirDropdown()" autocomplete="off">
+          <span class="mc-clear" onclick="limpiarTipo()" title="Limpiar">✕</span>
+          <span class="mc-arrow-tipo" onclick="toggleDropdown()">▼</span>
+          <div class="mc-tipo-dropdown" id="mcTipoDropdown">
+            <div class="mc-opt" onclick="seleccionarTipo('Soporte Físico Documental')">Soporte Físico Documental</div>
+            <div class="mc-opt" onclick="seleccionarTipo('Historia Clínica Digital')">Historia Clínica Digital</div>
+            <div class="mc-opt" onclick="seleccionarTipo('Consentimiento Informado')">Consentimiento Informado</div>
+            <div class="mc-opt" onclick="seleccionarTipo('Informe Médico')">Informe Médico</div>
+            <div class="mc-opt" onclick="seleccionarTipo('Epicrisis')">Epicrisis</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fecha Original Documento -->
+      <div class="modal-carga-field">
+        <label>Fecha Original Documento</label>
+        <div class="mc-date-wrap">
+          <input type="date" id="mcFecha">
+          <span class="mc-cal-icon">📅</span>
+        </div>
+      </div>
+
+    </div><!-- /body -->
+
+    <!-- Zona selección archivo -->
+    <div class="modal-carga-upload">
+      <label class="mc-file-btn" for="mcFileInput">Seleccione...</label>
+      <input type="file" id="mcFileInput" style="display:none" onchange="mcArchivoSeleccionado()">
+      <span class="mc-file-name" id="mcFileName">Ningún archivo seleccionado</span>
+    </div>
+
+    <!-- Pie -->
+    <div class="modal-carga-footer">
+      <button class="mc-btn-cerrar" onclick="cerrarModalDigitalizar()">Cerrar</button>
+    </div>
+
+  </div>
+</div>
 
 <div id="modalPrint" class="modal-print">
   <div class="print-content">
@@ -249,11 +403,11 @@
 </div>
 
 <script>
-  // 1. BASE DE DATOS UNIFICADA (MasterData de CustodioExterno + dbPacientes de ArchivoPrueba)
+  // 1. BASE DE DATOS UNIFICADA
   const dbPacientes = {
     '1001': { r:'12.345.678-9', n:'Carlos', ap:'Araya', am:'Guzmán', s:'' },
     '1002': { r:'15.667.889-0', n:'Ana', ap:'Zúñiga', am:'Pérez', s:'' },
-    '1003': { r:'18.112.334-5', n:'Jason', ap:'Olmos', am:'Alvarez', s:'' },
+    '1003': { r:'18.112.334-5', n:'Roberto', ap:'Méndez', am:'Tapia', s:'' },
     '1004': { r:'9.887.654-3', n:'Elena', ap:'Castro', am:'Beltrán', s:'' },
     '1005': { r:'20.443.221-K', n:'Mario', ap:'Salinas', am:'Rojas', s:'' },
     '1006': { r:'11.223.334-4', n:'Julia', ap:'Vargas', am:'Soto', s:'' },
@@ -300,7 +454,7 @@
     btn.classList.add('active');
   }
 
-  // LÓGICA ARCHIVOPRUEBA (Solicitudes)
+  // LÓGICA SOLICITUDES
   function buscarPaciente() {
     const f = document.getElementById('buscFicha').value;
     const p = dbPacientes[f];
@@ -333,7 +487,6 @@
   }
 
   function renderTablas() {
-    // MODIFICADO: agrega filtro por Instituto (hIT) en Mis Solicitudes
     const itSol = document.getElementById('hIT').value;
     const fichaSol = document.getElementById('hFicha').value.toLowerCase();
     const misFiltradas = solicitudes.filter(s =>
@@ -356,7 +509,7 @@
     renderCumplimiento();
   }
 
-  // LÓGICA CUSTODIO INTEGRADA (SOLO MEJORADA EN PROCESAROPERACION)
+  // LÓGICA CUSTODIO
   function setModo(modo, btn) {
     modoActualCustodio = modo;
     carritoCustodio = [];
@@ -427,7 +580,6 @@
 
   function removerCus(idx) { carritoCustodio.splice(idx, 1); renderCarritoCustodio(); }
 
-  // FUNCIÓN MEJORADA: DIFERENCIA ENTRE RETIRO (CON ETIQUETAS) Y REINTEGRO (CONFIRMACIÓN SIMPLE)
   function procesarOperacion() {
     if (modoActualCustodio === 'RETIRO') {
         const caja = apiDataCustodio.caja;
@@ -437,18 +589,14 @@
         document.getElementById('botonesImpresion').style.display = 'grid';
         document.getElementById('printTitle').innerText = 'Documentos de Despacho';
     } else {
-        // Mejorado para Reintegro: Solo confirmación con número de seguimiento
         const ticket = "REQ-" + Math.floor(Math.random()*90000 + 10000);
         document.getElementById('lblCajaLabel').innerText = "SEGUIMIENTO";
         document.getElementById('lblCajaID').innerText = ticket;
         document.getElementById('msgConfirmacion').innerText = `Solicitud de reingreso registrada con éxito para ${carritoCustodio.length} fichas. El transportista retirará las fichas del custodio en las próximas 24 horas.`;
-        document.getElementById('botonesImpresion').style.display = 'none'; // No mostrar botones de etiquetas
+        document.getElementById('botonesImpresion').style.display = 'none';
         document.getElementById('printTitle').innerText = 'Confirmación de Solicitud de Retorno';
     }
-    
     document.getElementById('modalPrint').style.display = 'flex';
-    
-    // Actualización de estado en la data maestra
     carritoCustodio.forEach(c => {
       let real = masterData.find(m => m.f === c.f);
       if(modoActualCustodio === 'RETIRO') { real.u = 'CUSTODIO'; real.c = apiDataCustodio.caja; real.ff = c.tempFF; }
@@ -470,12 +618,11 @@
     renderPasivas();
   }
 
-  // LÓGICA FICHAS PASIVAS (MODIFICADO: agrega filtro por Estado)
+  // LÓGICA FICHAS PASIVAS
   function renderPasivas() {
     const body = document.getElementById('bodyPasivas');
     const u = document.getElementById('pUbic').value;
     const b = document.getElementById('pBusca').value.toLowerCase();
-    // NUEVO: leer filtro de estado y mapearlo a ubicación
     const est = document.getElementById('pEstado').value;
     const filtradas = masterData.filter(p => {
       const estado = p.u === 'INSTITUTO' ? 'ACTIVO' : 'PASIVO';
@@ -510,15 +657,69 @@
     }).join('');
   }
 
-  function abrirModalDigitalizar() { if(selectedId) document.getElementById('modalDigitalizar').style.display = 'flex'; else alert("Seleccione una solicitud."); }
-  function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-  function finalizarCarga() { 
-    const item = solicitudes.find(x => x.id === selectedId);
-    if(item) item.estado = 'DIGITALIZADA';
-    cerrarModal('modalDigitalizar'); selectedId = null; renderTablas(); 
+  // ── LÓGICA NUEVO MODAL DIGITALIZAR ──
+  function abrirModalDigitalizar() {
+    if (!selectedId) return alert("Seleccione una solicitud.");
+    // Precargar fecha de hoy
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('mcFecha').value = hoy;
+    document.getElementById('mcTipoInput').value = 'Soporte Físico Documental';
+    document.getElementById('mcFileName').textContent = 'Ningún archivo seleccionado';
+    document.getElementById('mcFileInput').value = '';
+    document.getElementById('modalDigitalizar').style.display = 'flex';
   }
 
-  window.onload = () => { renderTablas(); renderPasivas(); renderTablaCustodio(); };
+  function cerrarModalDigitalizar() {
+    document.getElementById('modalDigitalizar').style.display = 'none';
+    cerrarDropdown();
+  }
+
+  function mcArchivoSeleccionado() {
+    const f = document.getElementById('mcFileInput').files[0];
+    document.getElementById('mcFileName').textContent = f ? f.name : 'Ningún archivo seleccionado';
+    if (f) {
+      // Mantiene la lógica original: marca como digitalizada
+      const item = solicitudes.find(x => x.id === selectedId);
+      if (item) item.estado = 'DIGITALIZADA';
+      cerrarModalDigitalizar();
+      selectedId = null;
+      renderTablas();
+    }
+  }
+
+  // Dropdown tipo documento
+  function filtrarTipo() {
+    const val = document.getElementById('mcTipoInput').value.toLowerCase();
+    document.querySelectorAll('.mc-opt').forEach(opt => {
+      opt.style.display = opt.textContent.toLowerCase().includes(val) ? 'block' : 'none';
+    });
+    document.getElementById('mcTipoDropdown').style.display = 'block';
+  }
+  function abrirDropdown() { document.getElementById('mcTipoDropdown').style.display = 'block'; }
+  function cerrarDropdown() { document.getElementById('mcTipoDropdown').style.display = 'none'; }
+  function toggleDropdown() {
+    const dd = document.getElementById('mcTipoDropdown');
+    dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+  }
+  function seleccionarTipo(val) {
+    document.getElementById('mcTipoInput').value = val;
+    cerrarDropdown();
+  }
+  function limpiarTipo() {
+    document.getElementById('mcTipoInput').value = '';
+    cerrarDropdown();
+  }
+
+  // Cerrar dropdown al click fuera
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#mcTipoWrap')) cerrarDropdown();
+  });
+
+  function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+
+  window.onload = () => {
+    renderTablas(); renderPasivas(); renderTablaCustodio();
+  };
 </script>
 </body>
 </html>
