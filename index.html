@@ -129,6 +129,8 @@
         <div class="form-group"><label>Desde</label><input type="date" id="hDesde"></div>
         <div class="form-group"><label>Hasta</label><input type="date" id="hHasta"></div>
         <div class="form-group"><label>Ficha</label><input type="text" id="hFicha" placeholder="Filtrar..."></div>
+        <!-- NUEVO FILTRO: INSTITUTO -->
+        <div class="form-group"><label>Instituto</label><select id="hIT"><option value="TODOS">TODOS LOS IT</option><option value="131">131 - SANTIAGO</option><option value="132">132 - VALPARAÍSO</option><option value="133">133 - CONCEPCIÓN</option><option value="134">134 - ANTOFAGASTA</option></select></div>
         <button class="btn btn-primary" onclick="renderTablas()">Aplicar Filtro</button>
       </div>
       <table id="tablaMisFichas">
@@ -212,11 +214,13 @@
     <div id="adm-pasivas" class="panel">
       <div class="filter-bar">
         <div class="form-group"><label>Ubicación</label><select id="pUbic"><option value="TODAS">TODAS LAS UBICACIONES</option><option value="INSTITUTO">IT SANTIAGO</option><option value="CUSTODIO">CUSTODIO EXTERNO</option></select></div>
+        <!-- NUEVO FILTRO: ESTADO -->
+        <div class="form-group"><label>Estado</label><select id="pEstado"><option value="TODOS">TODOS LOS ESTADOS</option><option value="ACTIVO">ACTIVO (En Instituto)</option><option value="PASIVO">PASIVO (En Custodio)</option></select></div>
         <div class="form-group" style="grid-column: span 2;"><label>Criterio (Ficha, RUT o Nombre)</label><input type="text" id="pBusca" placeholder="Ingrese dato de búsqueda..."></div>
         <button class="btn btn-primary" onclick="renderPasivas()">Buscar en Archivo</button>
       </div>
       <table id="tablaPasivas">
-        <thead><tr><th>N° Ficha</th><th>RUT</th><th>Paciente</th><th>Ubicación Actual</th><th>Detalle / Caja</th></tr></thead>
+        <thead><tr><th>N° Ficha</th><th>RUT</th><th>Paciente</th><th>Ubicación Actual</th><th>Estado</th><th>Detalle / Caja</th></tr></thead>
         <tbody id="bodyPasivas"></tbody>
       </table>
     </div>
@@ -329,7 +333,14 @@
   }
 
   function renderTablas() {
-    document.querySelector('#tablaMisFichas tbody').innerHTML = solicitudes.map(s => `
+    // MODIFICADO: agrega filtro por Instituto (hIT) en Mis Solicitudes
+    const itSol = document.getElementById('hIT').value;
+    const fichaSol = document.getElementById('hFicha').value.toLowerCase();
+    const misFiltradas = solicitudes.filter(s =>
+      (itSol === 'TODOS' || s.it === itSol) &&
+      (fichaSol === '' || s.ficha.toLowerCase().includes(fichaSol))
+    );
+    document.querySelector('#tablaMisFichas tbody').innerHTML = misFiltradas.map(s => `
       <tr><td>#${s.id}</td><td>${s.fecha}</td><td>${s.it}</td><td>${s.ficha}</td><td>${s.paciente}</td><td><span class="badge ${s.estado==='PENDIENTE'?'badge-pend':'badge-done'}">${s.estado}</span></td></tr>
     `).join('');
 
@@ -459,15 +470,32 @@
     renderPasivas();
   }
 
-  // LÓGICA FICHAS PASIVAS (Unificada con masterData)
+  // LÓGICA FICHAS PASIVAS (MODIFICADO: agrega filtro por Estado)
   function renderPasivas() {
     const body = document.getElementById('bodyPasivas');
     const u = document.getElementById('pUbic').value;
     const b = document.getElementById('pBusca').value.toLowerCase();
-    const filtradas = masterData.filter(p => (u==='TODAS' || p.u === u) && (p.f.includes(b) || p.r.includes(b) || p.p.toLowerCase().includes(b)));
-    body.innerHTML = filtradas.length ? filtradas.map(p => `
-      <tr><td>${p.f}</td><td>${p.r}</td><td>${p.p}</td><td>${p.u==='INSTITUTO'?'IT SANTIAGO':'CUSTODIO EXTERNO'}</td><td>${p.c} / ${p.ff}</td></tr>
-    `).join('') : '<tr><td colspan="5" style="text-align:center; padding:20px">No se encontraron registros.</td></tr>';
+    // NUEVO: leer filtro de estado y mapearlo a ubicación
+    const est = document.getElementById('pEstado').value;
+    const filtradas = masterData.filter(p => {
+      const estado = p.u === 'INSTITUTO' ? 'ACTIVO' : 'PASIVO';
+      return (u === 'TODAS' || p.u === u) &&
+             (est === 'TODOS' || estado === est) &&
+             (p.f.includes(b) || p.r.includes(b) || p.p.toLowerCase().includes(b));
+    });
+    body.innerHTML = filtradas.length ? filtradas.map(p => {
+      const estado = p.u === 'INSTITUTO' ? 'ACTIVO' : 'PASIVO';
+      const badgeStyle = estado === 'ACTIVO'
+        ? 'background:#d4edda; color:#155724;'
+        : 'background:#fff3cd; color:#856404;';
+      return `
+        <tr>
+          <td>${p.f}</td><td>${p.r}</td><td>${p.p}</td>
+          <td>${p.u === 'INSTITUTO' ? 'IT SANTIAGO' : 'CUSTODIO EXTERNO'}</td>
+          <td><span class="badge" style="${badgeStyle}">${estado}</span></td>
+          <td>${p.c} / ${p.ff}</td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="6" style="text-align:center; padding:20px">No se encontraron registros.</td></tr>';
   }
 
   function calcularKPI() { renderCumplimiento(); }
