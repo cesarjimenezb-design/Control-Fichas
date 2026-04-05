@@ -172,7 +172,7 @@
     <div id="sol-form" class="panel active">
       <h2>Registro de Solicitud Profesional</h2>
       <div class="form-grid">
-        <div class="form-group"><label>Estamento</label><select id="solProfesion"><option>FISIATRÍA</option><option>KINESIOLOGÍA</option><option>TERAPIA OCUPACIONAL</option><option>FONOAUDIOLOGÍA</option><option>PSICOLOGÍA</option></select></div>
+        <div class="form-group"><label>Profesional</label><select id="solProfesion"><option>FISIATRÍA</option><option>KINESIOLOGÍA</option><option>TERAPIA OCUPACIONAL</option><option>FONOAUDIOLOGÍA</option><option>PSICOLOGÍA</option></select></div>
         <div class="form-group"><label>Instituto (IT)</label><select id="solIT"><option value="131">131 - SANTIAGO</option><option value="132">132 - VALPARAÍSO</option><option value="133">133 - CONCEPCIÓN</option><option value="134">134 - ANTOFAGASTA</option></select></div>
         <div class="form-group" style="grid-column: span 2;"><label>N° Ficha (Busque 1001 a 1010)</label><input type="text" id="buscFicha" onblur="buscarPaciente()" placeholder="Ej: 1005"></div>
       </div>
@@ -219,7 +219,7 @@
         <button class="btn btn-primary" onclick="abrirModalDigitalizar()" id="btnDigit">Procesar Selección</button>
       </div>
       <table id="tablaAdmin">
-        <thead><tr><th>ID</th><th>IT</th><th>Ficha</th><th>Estamento</th><th>Paciente</th><th>Estado</th></tr></thead>
+        <thead><tr><th>ID</th><th>IT</th><th>Ficha</th><th>Profesional</th><th>Paciente</th><th>Estado</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -269,7 +269,7 @@
         <button class="btn btn-excel" onclick="exportarExcel()">Exportar Excel</button>
       </div>
       <table id="tablaCumplimiento">
-        <thead><tr><th>Estamento Profesional</th><th>Total Solicitadas</th><th>Total Digitalizadas</th><th>% Cumplimiento Real</th></tr></thead>
+        <thead><tr><th>Profesional</th><th>Total Solicitadas</th><th>Total Digitalizadas</th><th>% Cumplimiento Real</th></tr></thead>
         <tbody id="bodyCumplimiento"></tbody>
       </table>
     </div>
@@ -299,7 +299,7 @@
     <div style="background:#f0f7ff; border:1px solid #bee3f8; border-radius:6px; padding:10px 14px; font-size:11px; color:#1a5276; margin-bottom:20px; text-align:left;">
       <div>Solicitud: <strong id="mdSolId"></strong></div>
       <div>Fecha digitalización: <strong id="mdSolFecha"></strong></div>
-      <div>Estamento: <strong id="mdSolEstamento"></strong></div>
+      <div>Profesional: <strong id="mdSolProfesional"></strong></div>
     </div>
     <button class="btn btn-primary" onclick="cerrarModalYaDigitalizada()">Entendido</button>
   </div>
@@ -396,16 +396,37 @@
   // Fichas ACTIVO solo existen en INSTITUTO.
   // Fichas PASIVO pueden estar en INSTITUTO o en CUSTODIO.
   let masterData = [
-    { f: '1001',   r: '12.345.678-9', p: 'Carlos Araya',   u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
-    { f: '1002',   r: '15.667.889-0', p: 'Ana Zúñiga',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
-    { f: '101020', r: '12.334.445-1', p: 'Cesar Jiménez',  u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '102030', r: '15.223.112-K', p: 'Marta Rivas',    u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',   u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8801',  e: 'PASIVO' },
-    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',     u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8802',  e: 'PASIVO' },
-    { f: '102060', r: '11.443.221-0', p: 'Roberto Tapia',  u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
-    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',  u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9010',  e: 'PASIVO' },
-    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',    u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9011',  e: 'PASIVO' },
-    { f: '103013', r: '13.445.998-9', p: 'Beatriz Peña',   u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' }
+    // ── ACTIVO en Instituto (no disponibles para despacho) ──────────────────
+    { f: '1001',   r: '12.345.678-9', p: 'Carlos Araya',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
+    { f: '1002',   r: '15.667.889-0', p: 'Ana Zúñiga',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
+    { f: '102060', r: '11.443.221-0', p: 'Roberto Tapia',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
+    { f: '104001', r: '10.111.222-3', p: 'Sofía Herrera',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
+    { f: '104002', r: '14.222.333-4', p: 'Diego Contreras',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
+    // ── PASIVO en Instituto (disponibles para Solicitar Envío) ──────────────
+    { f: '101020', r: '12.334.445-1', p: 'Cesar Jiménez',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
+    { f: '102030', r: '15.223.112-K', p: 'Marta Rivas',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
+    { f: '103013', r: '13.445.998-9', p: 'Beatriz Peña',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
+    { f: '104010', r: '16.543.210-8', p: 'Valentina Soto',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
+    { f: '104011', r: '19.876.543-2', p: 'Patricio Muñoz',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
+    { f: '104012', r: '11.234.567-K', p: 'Camila Vega',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
+    { f: '104013', r: '17.890.123-5', p: 'Rodrigo Fuentes',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
+    { f: '104014', r: '13.567.890-1', p: 'Isadora Campos',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
+    { f: '104015', r: '20.345.678-7', p: 'Nicolás Ibáñez',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
+    // ── PASIVO en Custodio (disponibles para Solicitar Retorno) ─────────────
+    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',        u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8801',  e: 'PASIVO' },
+    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8802',  e: 'PASIVO' },
+    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9010',  e: 'PASIVO' },
+    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9011',  e: 'PASIVO' },
+    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9200',  e: 'PASIVO' },
+    { f: '105002', r: '16.789.012-3', p: 'Andrés Navarro',      u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9201',  e: 'PASIVO' },
+    { f: '105003', r: '12.890.123-4', p: 'Lorena Espinoza',     u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9202',  e: 'PASIVO' },
+    { f: '105004', r: '18.012.345-6', p: 'Felipe Sepúlveda',    u: 'CUSTODIO',  c: 'CX-2024-004', ff: 'FF-9410',  e: 'PASIVO' },
+    { f: '105005', r: '15.123.456-7', p: 'Gabriela Ortiz',      u: 'CUSTODIO',  c: 'CX-2024-004', ff: 'FF-9411',  e: 'PASIVO' },
+    { f: '105006', r: '11.345.678-9', p: 'Tomás Guerrero',      u: 'CUSTODIO',  c: 'CX-2024-004', ff: 'FF-9412',  e: 'PASIVO' },
+    { f: '105007', r: '19.456.789-K', p: 'Javiera Alarcón',     u: 'CUSTODIO',  c: 'CX-2025-001', ff: 'FF-9600',  e: 'PASIVO' },
+    { f: '105008', r: '13.678.901-1', p: 'Sebastián Pizarro',   u: 'CUSTODIO',  c: 'CX-2025-001', ff: 'FF-9601',  e: 'PASIVO' },
+    { f: '105009', r: '17.901.234-3', p: 'Constanza Medina',    u: 'CUSTODIO',  c: 'CX-2025-002', ff: 'FF-9750',  e: 'PASIVO' },
+    { f: '105010', r: '10.234.567-5', p: 'Martín Villalobos',   u: 'CUSTODIO',  c: 'CX-2025-002', ff: 'FF-9751',  e: 'PASIVO' },
   ];
 
   let solicitudes = [];
@@ -444,7 +465,7 @@
       document.getElementById('mdPacNombre').textContent  = p.n + ' ' + p.ap + ' ' + p.am;
       document.getElementById('mdSolId').textContent      = '#' + yaDigitalizada.id;
       document.getElementById('mdSolFecha').textContent   = yaDigitalizada.fecha;
-      document.getElementById('mdSolEstamento').textContent = yaDigitalizada.estamento;
+      document.getElementById('mdSolProfesional').textContent = yaDigitalizada.profesional;
       document.getElementById('modalYaDigitalizada').style.display = 'flex';
       return; // cortar flujo — no poblar campos
     }
@@ -473,7 +494,7 @@
       it: document.getElementById('solIT').value,
       ficha: f, 
       paciente: dbPacientes[f].n + ' ' + dbPacientes[f].ap,
-      estamento: document.getElementById('solProfesion').value, 
+      profesional: document.getElementById('solProfesion').value, 
       estado: 'PENDIENTE', 
       fecha: new Date().toLocaleDateString()
     });
@@ -498,7 +519,7 @@
     const filtradas = solicitudes.filter(x => (itFiltro === 'TODOS' || x.it === itFiltro) && x.estado === estFiltro);
     document.querySelector('#tablaAdmin tbody').innerHTML = filtradas.map(s => `
       <tr class="${selectedId===s.id?'selected':''}" onclick="selectedId=${s.id}; renderTablas();">
-        <td>#${s.id}</td><td>${s.it}</td><td>${s.ficha}</td><td>${s.estamento}</td><td>${s.paciente}</td><td>${s.estado}</td>
+        <td>#${s.id}</td><td>${s.it}</td><td>${s.ficha}</td><td>${s.profesional}</td><td>${s.paciente}</td><td>${s.estado}</td>
       </tr>
     `).join('');
     renderCumplimiento();
@@ -661,11 +682,11 @@
   function calcularKPI() { renderCumplimiento(); }
   function renderCumplimiento() {
     const tbody = document.getElementById('bodyCumplimiento');
-    const estactivos = [...new Set(solicitudes.map(s => s.estamento))];
+    const estactivos = [...new Set(solicitudes.map(s => s.profesional))];
     if(estactivos.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">Sin datos.</td></tr>'; return; }
     tbody.innerHTML = estactivos.map(e => {
-      const sol = solicitudes.filter(s => s.estamento === e).length;
-      const dig = solicitudes.filter(s => s.estamento === e && s.estado === 'DIGITALIZADA').length;
+      const sol = solicitudes.filter(s => s.profesional === e).length;
+      const dig = solicitudes.filter(s => s.profesional === e && s.estado === 'DIGITALIZADA').length;
       return `<tr><td><b>${e}</b></td><td>${sol}</td><td>${dig}</td><td style="color:var(--tel-red); font-weight:bold">${((dig/sol)*100).toFixed(1)}%</td></tr>`;
     }).join('');
   }
