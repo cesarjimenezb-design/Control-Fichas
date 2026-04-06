@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema Control de Fichas Clínicas v3.8 - Integrado</title>
+  <title>Sistema Control de Fichas Clínicas v4.2 - Mejorado</title>
   <style>
     /* ESTILOS ORIGINALES ARCHIVOPRUEBA.HTML */
     :root {
@@ -41,6 +41,7 @@
     .form-group { display: flex; flex-direction: column; gap: 3px; }
     label { font-size: 10px; font-weight: 800; color: var(--tel-text-soft); text-transform: uppercase; }
     input, select { padding: 8px 10px; font-size: 12px; border: 1px solid #ced4da; border-radius: 4px; }
+    input:disabled, select:disabled { background: #e9ecef; cursor: not-allowed; }
     .readonly { background: #f8f9fa; font-weight: 600; color: #444; border: 1px dashed #ccc; }
 
     .actions { display: flex; gap: 10px; border-top: 1px solid #eee; padding-top: 20px; justify-content: flex-end; }
@@ -49,6 +50,7 @@
     .btn-primary { background: var(--tel-red); color: white; }
     .btn-excel { background: #1d6f42; color: white; }
     .btn-secondary { background: #6c757d; color: white; }
+    .btn-info { background: #17a2b8; color: white; }
 
     table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
     th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6; color: var(--tel-text-soft); }
@@ -60,7 +62,7 @@
     .badge-done { background: #d4edda; color: #155724; }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal-content { background: white; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
 
     /* ESTILOS ADICIONALES CUSTODIOEXTERNO.HTML */
     .nav-op { display: flex; gap: 5px; margin-bottom: 20px; background: #eee; padding: 5px; border-radius: 6px; width: fit-content; }
@@ -84,57 +86,34 @@
     .label-preview { border: 2px dashed #ccc; padding: 15px; margin: 15px 0; background: #fafafa; display: flex; flex-direction: column; gap: 10px; }
     .barcode-sim { height: 40px; background: repeating-linear-gradient(90deg, #000, #000 2px, #fff 2px, #fff 4px); width: 80%; margin: 0 auto; }
 
-    /* ESTILOS MODAL CARGA DE DOCUMENTOS */
-    .modal-carga-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-      display: none; justify-content: center; align-items: center; z-index: 1000;
-    }
-    .modal-carga-box {
-      background: white; width: 620px; border-radius: 6px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.18); overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .modal-carga-header {
-      padding: 20px 24px 14px;
-      border-bottom: 2px solid #e9ecef;
-      font-size: 16px; font-weight: 600; color: #212529;
-    }
+    /* ESTILOS ALERTAS Y TRAZABILIDAD */
+    .alert-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+    .alert-card { padding: 15px; border-radius: 8px; border-left: 4px solid; display: flex; flex-direction: column; gap: 10px; }
+    .alert-danger { background: #fff5f5; border-color: #e53e3e; }
+    .alert-warning { background: #fffff0; border-color: #d69e2e; }
+    .alert-info { background: #ebf8ff; border-color: #3182ce; }
+    .alert-card h3 { margin: 0; font-size: 13px; color: #2d3748; }
+    .alert-card .count { font-size: 24px; font-weight: 800; color: #1a202c; }
+    
+    .table-trazabilidad { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+    .table-trazabilidad th { background: #e2e8f0; color: #4a5568; padding: 8px; }
+    .table-trazabilidad td { padding: 8px; border-bottom: 1px solid #edf2f7; text-align: left; }
+
+    /* ESTILOS MODAL CARGA DE DOCUMENTOS (Mantenidos igual) */
+    .modal-carga-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-carga-box { background: white; width: 620px; border-radius: 6px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .modal-carga-header { padding: 20px 24px 14px; border-bottom: 2px solid #e9ecef; font-size: 16px; font-weight: 600; color: #212529; }
     .modal-carga-body { padding: 0; }
-    .modal-carga-field {
-      padding: 16px 24px;
-      border-bottom: 1px solid #e9ecef;
-    }
-    .modal-carga-field label {
-      display: block; font-size: 13px; font-weight: 700;
-      color: #212529; margin-bottom: 8px; text-transform: none; letter-spacing: 0;
-    }
+    .modal-carga-field { padding: 16px 24px; border-bottom: 1px solid #e9ecef; }
+    .modal-carga-field label { display: block; font-size: 13px; font-weight: 700; color: #212529; margin-bottom: 8px; text-transform: none; letter-spacing: 0; }
     .modal-carga-field .mc-select-wrap { position: relative; }
-    .modal-carga-field select,
-    .modal-carga-field input[type="date"] {
-      width: 100%; padding: 9px 36px 9px 12px;
-      font-size: 13px; border: 1px solid #ced4da; border-radius: 4px;
-      color: #212529; background: white; appearance: none; -webkit-appearance: none;
-    }
-    .modal-carga-field .mc-arrow {
-      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-      pointer-events: none; color: #555; font-size: 12px;
-    }
-    .mc-tipo-wrap {
-      position: relative; display: flex; align-items: center;
-      border: 1.5px solid #e30613; border-radius: 4px; background: white;
-    }
-    .mc-tipo-wrap input[type="text"] {
-      flex: 1; border: none; outline: none; padding: 9px 8px 9px 12px;
-      font-size: 13px; color: #212529; border-radius: 4px;
-    }
+    .modal-carga-field select, .modal-carga-field input[type="date"] { width: 100%; padding: 9px 36px 9px 12px; font-size: 13px; border: 1px solid #ced4da; border-radius: 4px; color: #212529; background: white; appearance: none; -webkit-appearance: none; }
+    .modal-carga-field .mc-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #555; font-size: 12px; }
+    .mc-tipo-wrap { position: relative; display: flex; align-items: center; border: 1.5px solid #e30613; border-radius: 4px; background: white; }
+    .mc-tipo-wrap input[type="text"] { flex: 1; border: none; outline: none; padding: 9px 8px 9px 12px; font-size: 13px; color: #212529; border-radius: 4px; }
     .mc-tipo-wrap .mc-clear { padding: 0 8px; color: #555; cursor: pointer; font-size: 14px; user-select: none; line-height: 1; }
     .mc-tipo-wrap .mc-arrow-tipo { padding: 0 10px 0 4px; color: #555; font-size: 12px; cursor: pointer; }
-    .mc-tipo-dropdown {
-      position: absolute; top: calc(100% + 2px); left: 0; right: 0;
-      background: white; border: 1px solid #ced4da; border-radius: 4px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 100;
-      display: none; max-height: 160px; overflow-y: auto;
-    }
+    .mc-tipo-dropdown { position: absolute; top: calc(100% + 2px); left: 0; right: 0; background: white; border: 1px solid #ced4da; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 100; display: none; max-height: 160px; overflow-y: auto; }
     .mc-tipo-dropdown .mc-opt { padding: 9px 14px; font-size: 13px; cursor: pointer; color: #212529; }
     .mc-tipo-dropdown .mc-opt:hover { background: #f1f3f5; }
     .mc-date-wrap { position: relative; }
@@ -157,7 +136,11 @@
     <label style="font-size:10px; font-weight:bold; margin-right:5px">CAMBIAR PERFIL:</label>
     <select id="profileSelect" onchange="cambiarPerfil()">
       <option value="solicitante">Profesional Solicitante</option>
-      <option value="admin">Administrador Archivo</option>
+      <option value="admin_central">Admin. Central (Visibilidad Total)</option>
+      <option value="admin_131">Admin. IT 131 - SANTIAGO</option>
+      <option value="admin_132">Admin. IT 132 - VALPARAÍSO</option>
+      <option value="admin_133">Admin. IT 133 - CONCEPCIÓN</option>
+      <option value="admin_134">Admin. IT 134 - ANTOFAGASTA</option>
     </select>
   </div>
 </header>
@@ -208,12 +191,13 @@
       <button class="tab-btn active" onclick="switchTab('admin', 'adm-bandeja', this)">Bandeja Digitalización</button>
       <button class="tab-btn" onclick="switchTab('admin', 'adm-custodio', this)">Movimiento Ficha Externo</button>
       <button class="tab-btn" onclick="switchTab('admin', 'adm-cumplimiento', this)">Nivel Cumplimiento</button>
-      <button class="tab-btn" onclick="switchTab('admin', 'adm-pasivas', this)">Fichas Pasivas</button>
+      <button class="tab-btn" onclick="switchTab('admin', 'adm-pasivas', this)">Fichas Pasivas / Archivo</button>
+      <button class="tab-btn" onclick="switchTab('admin', 'adm-alertas', this)">Alertas y Vencimientos</button>
     </nav>
 
     <div id="adm-bandeja" class="panel active">
       <div class="filter-bar">
-        <div class="form-group"><label>Filtrar IT</label><select id="fIT"><option value="TODOS">TODOS LOS IT</option><option>131</option><option>132</option><option>133</option></select></div>
+        <div class="form-group"><label>Filtrar IT</label><select id="fIT"><option value="TODOS">TODOS LOS IT</option><option value="131">131 - SANTIAGO</option><option value="132">132 - VALPARAÍSO</option><option value="133">133 - CONCEPCIÓN</option><option value="134">134 - ANTOFAGASTA</option></select></div>
         <div class="form-group"><label>Estado</label><select id="fEstado"><option>PENDIENTE</option><option>DIGITALIZADA</option></select></div>
         <button class="btn btn-primary" onclick="renderTablas()">Actualizar Bandeja</button>
         <button class="btn btn-primary" onclick="abrirModalDigitalizar()" id="btnDigit">Procesar Selección</button>
@@ -226,12 +210,10 @@
 
     <div id="adm-custodio" class="panel">
       <h2>Gestión de Custodio Externo <small style="font-size: 11px; color: #666; float: right;">Operador: Archive Express S.A.</small></h2>
-      
       <div class="nav-op">
         <button class="nav-btn active" id="btnModoRetiro" onclick="setModo('RETIRO', this)">SOLICITAR ENVÍO (Retiro IT)</button>
         <button class="nav-btn" id="btnModoReintegro" onclick="setModo('REINTEGRO', this)">SOLICITAR RETORNO (Reintegro IT)</button>
       </div>
-      
       <div class="grid-custodio">
         <div class="panel-left-cus">
           <div id="tituloInventario" style="font-weight: bold; margin-bottom: 10px; color: #444; font-size: 12px;">Fichas en Instituto (Listas para despacho)</div>
@@ -239,20 +221,17 @@
             <input type="text" id="busquedaGlobal" placeholder="Buscar por N° Ficha, RUT o Nombre..." onkeyup="renderTablaCustodio()">
           </div>
           <table>
-            <thead><tr><th>N° Ficha</th><th>Paciente</th><th>Ubicación</th><th>Caja/File</th><th>Acción</th></tr></thead>
+            <thead><tr><th>N° Ficha</th><th>Paciente</th><th>Ubicación</th><th>Caja/File</th><th>Acciones</th></tr></thead>
             <tbody id="tablaPrincipalCustodio"></tbody>
           </table>
         </div>
-
         <div id="panelConfig" class="panel-right-cus mode-RETIRO">
           <div style="font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 10px; font-size: 12px;" id="cartTitle">PREPARAR ENVÍO</div>
           <button class="btn btn-api" id="btnApi" onclick="conectarAPI()">1. Sincronizar API Custodio</button>
-          
           <div id="datosAPI" style="display:none; margin-bottom: 15px; font-size: 11px; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 4px;">
             <div id="apiInfoCaja">Caja: <b>---</b></div>
             <div id="apiInfoFile">Inicio FF: <b>---</b></div>
           </div>
-
           <div class="cart-list" id="listaSeleccion">
             <div style="text-align: center; color: #999; padding: 20px;">Sin fichas seleccionadas</div>
           </div>
@@ -264,7 +243,7 @@
     <div id="adm-cumplimiento" class="panel">
       <div class="filter-bar">
         <div class="form-group"><label>Periodo</label><select id="cPeriodo"><option>MAYO 2024</option><option>JUNIO 2024</option></select></div>
-        <div class="form-group"><label>Sede IT</label><select id="cIT"><option value="TODOS">TODOS LOS INSTITUTOS</option><option value="131">131 - SANTIAGO</option><option value="132">132 - VALPARAÍSO</option></select></div>
+        <div class="form-group"><label>Sede IT</label><select id="cIT"><option value="TODOS">TODOS LOS INSTITUTOS</option><option value="131">131 - SANTIAGO</option><option value="132">132 - VALPARAÍSO</option><option value="133">133 - CONCEPCIÓN</option><option value="134">134 - ANTOFAGASTA</option></select></div>
         <button class="btn btn-primary" onclick="calcularKPI()">Actualizar</button>
         <button class="btn btn-excel" onclick="exportarExcel()">Exportar Excel</button>
       </div>
@@ -276,16 +255,46 @@
 
     <div id="adm-pasivas" class="panel">
       <div class="filter-bar">
-        <div class="form-group"><label>Ubicación</label><select id="pUbic"><option value="TODAS">TODAS LAS UBICACIONES</option><option value="INSTITUTO">IT SANTIAGO</option><option value="CUSTODIO">CUSTODIO EXTERNO</option></select></div>
+        <div class="form-group"><label>Ubicación</label><select id="pUbic"><option value="TODAS">TODAS LAS UBICACIONES</option><option value="INSTITUTO">EN INSTITUTO</option><option value="CUSTODIO">EN CUSTODIO EXTERNO</option></select></div>
         <div class="form-group"><label>Estado Ficha</label><select id="pEstado"><option value="TODOS">TODOS LOS ESTADOS</option><option value="ACTIVO">ACTIVO</option><option value="PASIVO">PASIVO</option></select></div>
         <div class="form-group" style="grid-column: span 2;"><label>Criterio (Ficha, RUT o Nombre)</label><input type="text" id="pBusca" placeholder="Ingrese dato de búsqueda..."></div>
         <button class="btn btn-primary" onclick="renderPasivas()">Buscar en Archivo</button>
       </div>
       <table id="tablaPasivas">
-        <thead><tr><th>N° Ficha</th><th>RUT</th><th>Paciente</th><th>Ubicación Actual</th><th>Estado Ficha</th><th>Detalle / Caja</th></tr></thead>
+        <thead><tr><th>N° Ficha</th><th>IT</th><th>RUT</th><th>Paciente</th><th>Ubicación Actual</th><th>Estado Ficha</th><th>Detalle/Caja</th><th>Trazabilidad</th></tr></thead>
         <tbody id="bodyPasivas"></tbody>
       </table>
     </div>
+
+    <div id="adm-alertas" class="panel">
+      <h2>Panel de Alertas y Vencimientos <small style="font-size: 11px; color: #666; float: right; font-weight:normal;" id="txtAlertaIT">Mostrando red completa</small></h2>
+      <p style="font-size: 12px; margin-bottom: 20px; color: #555;">Monitoreo en tiempo real de desviaciones operativas y normativas (Ley 20.584).</p>
+      
+      <div class="alert-grid">
+        <div class="alert-card alert-danger">
+          <h3>Fichas Custodio > 180 días</h3>
+          <div class="count" id="countCustodio">0</div>
+          <p style="font-size:10px; margin:0; color:#555;">Exceden el tiempo de retención sugerido fuera del instituto.</p>
+        </div>
+        <div class="alert-card alert-warning">
+          <h3>Pendientes Digitalización > 5 días</h3>
+          <div class="count" id="countDigital">0</div>
+          <p style="font-size:10px; margin:0; color:#555;">Solicitudes que superan el SLA máximo de respuesta.</p>
+        </div>
+        <div class="alert-card alert-info">
+          <h3>Activas sin Atención > 90 días</h3>
+          <div class="count" id="countActivas">0</div>
+          <p style="font-size:10px; margin:0; color:#555;">Posibles candidatas a ser declaradas como ficha PASIVA.</p>
+        </div>
+      </div>
+
+      <h3 style="font-size: 13px; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Detalle de Alertas Activas</h3>
+      <table id="tablaAlertas" style="margin-top: 15px;">
+        <thead><tr><th>Tipo de Alerta</th><th>N° Ficha</th><th>IT</th><th>Paciente</th><th>Días de Desviación</th></tr></thead>
+        <tbody id="bodyAlertas"></tbody>
+      </table>
+    </div>
+
   </div>
 </main>
 
@@ -301,60 +310,34 @@
       <div>Fecha digitalización: <strong id="mdSolFecha"></strong></div>
       <div>Profesional: <strong id="mdSolProfesional"></strong></div>
     </div>
-    <button class="btn btn-primary" onclick="cerrarModalYaDigitalizada()">Entendido</button>
+    <button class="btn btn-primary" onclick="cerrarModal('modalYaDigitalizada'); limpiarCamposSolicitud();">Entendido</button>
   </div>
 </div>
 
 <div id="modalConfirmacion" class="modal-overlay"><div class="modal-content"><div style="color: #28a745; font-size: 50px;">✓</div><h3>Solicitud Registrada</h3><p>La solicitud se ha enviado al equipo de archivo clínico.</p><button class="btn btn-primary" onclick="cerrarModal('modalConfirmacion')">Entendido</button></div></div>
 
-<!-- MODAL CARGA DE DOCUMENTOS -->
 <div id="modalDigitalizar" class="modal-carga-overlay">
   <div class="modal-carga-box">
     <div class="modal-carga-header">Carga de Documentos</div>
     <div class="modal-carga-body">
       <div class="modal-carga-field">
         <label>Ámbito</label>
-        <div class="mc-select-wrap">
-          <select id="mcAmbito">
-            <option>Soporte Físico Documental Digitalizado</option>
-            <option>Documento Electrónico Original</option>
-            <option>Registro Administrativo</option>
-          </select>
-          <span class="mc-arrow">▼</span>
-        </div>
+        <div class="mc-select-wrap"><select id="mcAmbito"><option>Soporte Físico Documental Digitalizado</option><option>Documento Electrónico Original</option><option>Registro Administrativo</option></select><span class="mc-arrow">▼</span></div>
       </div>
       <div class="modal-carga-field">
         <label>Tipo de Documento</label>
         <div class="mc-tipo-wrap" id="mcTipoWrap">
-          <input type="text" id="mcTipoInput" placeholder="Soporte Físico Documental"
-                 oninput="filtrarTipo()" onfocus="abrirDropdown()" autocomplete="off">
-          <span class="mc-clear" onclick="limpiarTipo()" title="Limpiar">✕</span>
-          <span class="mc-arrow-tipo" onclick="toggleDropdown()">▼</span>
+          <input type="text" id="mcTipoInput" placeholder="Soporte Físico Documental" oninput="filtrarTipo()" onfocus="abrirDropdown()" autocomplete="off">
+          <span class="mc-clear" onclick="limpiarTipo()" title="Limpiar">✕</span><span class="mc-arrow-tipo" onclick="toggleDropdown()">▼</span>
           <div class="mc-tipo-dropdown" id="mcTipoDropdown">
-            <div class="mc-opt" onclick="seleccionarTipo('Soporte Físico Documental')">Soporte Físico Documental</div>
-            <div class="mc-opt" onclick="seleccionarTipo('Historia Clínica Digital')">Historia Clínica Digital</div>
-            <div class="mc-opt" onclick="seleccionarTipo('Consentimiento Informado')">Consentimiento Informado</div>
-            <div class="mc-opt" onclick="seleccionarTipo('Informe Médico')">Informe Médico</div>
-            <div class="mc-opt" onclick="seleccionarTipo('Epicrisis')">Epicrisis</div>
+            <div class="mc-opt" onclick="seleccionarTipo('Soporte Físico Documental')">Soporte Físico Documental</div><div class="mc-opt" onclick="seleccionarTipo('Historia Clínica Digital')">Historia Clínica Digital</div><div class="mc-opt" onclick="seleccionarTipo('Consentimiento Informado')">Consentimiento Informado</div><div class="mc-opt" onclick="seleccionarTipo('Informe Médico')">Informe Médico</div><div class="mc-opt" onclick="seleccionarTipo('Epicrisis')">Epicrisis</div>
           </div>
         </div>
       </div>
-      <div class="modal-carga-field">
-        <label>Fecha Original Documento</label>
-        <div class="mc-date-wrap">
-          <input type="date" id="mcFecha">
-          <span class="mc-cal-icon">📅</span>
-        </div>
-      </div>
+      <div class="modal-carga-field"><label>Fecha Original Documento</label><div class="mc-date-wrap"><input type="date" id="mcFecha"><span class="mc-cal-icon">📅</span></div></div>
     </div>
-    <div class="modal-carga-upload">
-      <label class="mc-file-btn" for="mcFileInput">Seleccione...</label>
-      <input type="file" id="mcFileInput" style="display:none" onchange="mcArchivoSeleccionado()">
-      <span class="mc-file-name" id="mcFileName">Ningún archivo seleccionado</span>
-    </div>
-    <div class="modal-carga-footer">
-      <button class="mc-btn-cerrar" onclick="cerrarModalDigitalizar()">Cerrar</button>
-    </div>
+    <div class="modal-carga-upload"><label class="mc-file-btn" for="mcFileInput">Seleccione...</label><input type="file" id="mcFileInput" style="display:none" onchange="mcArchivoSeleccionado()"><span class="mc-file-name" id="mcFileName">Ningún archivo seleccionado</span></div>
+    <div class="modal-carga-footer"><button class="mc-btn-cerrar" onclick="cerrarModalDigitalizar()">Cerrar</button></div>
   </div>
 </div>
 
@@ -376,7 +359,26 @@
   </div>
 </div>
 
+<div id="modalTrazabilidad" class="modal-overlay">
+  <div class="modal-content" style="width: 650px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">
+      <h3 style="margin:0; color:var(--tel-red-dark);">Historial de Trazabilidad</h3>
+      <span style="font-size:12px; font-weight:bold; background:#eee; padding:4px 8px; border-radius:4px;">Ficha: <span id="trazFicha" style="color:var(--tel-red);"></span></span>
+    </div>
+    <table class="table-trazabilidad">
+      <thead><tr><th>Fecha y Hora</th><th>Acción Registrada</th><th>Movimiento Físico</th><th>Responsable Operación</th></tr></thead>
+      <tbody id="trazBody"></tbody>
+    </table>
+    <div class="actions" style="margin-top:20px; border-top:none;">
+      <button class="btn btn-secondary" onclick="cerrarModal('modalTrazabilidad')">Cerrar Historial</button>
+    </div>
+  </div>
+</div>
+
 <script>
+  // VARIABLES DE PERMISOS
+  let currentAdminMode = 'TODOS'; // 'TODOS', '131', '132', etc.
+
   const dbPacientes = {
     '1001': { r:'12.345.678-9', n:'Carlos', ap:'Araya', am:'Guzmán', s:'' },
     '1002': { r:'15.667.889-0', n:'Ana', ap:'Zúñiga', am:'Pérez', s:'' },
@@ -390,59 +392,86 @@
     '1010': { r:'13.445.667-8', n:'Beatriz', ap:'Meza', am:'Peña', s:'' }
   };
 
-  // Campo 'e' = estado propio de la ficha: 'ACTIVO' o 'PASIVO'
-  // Campo 'u' = ubicación física actual: 'INSTITUTO' o 'CUSTODIO'
-  // El estado 'e' NO cambia al mover la ficha entre ubicaciones.
-  // Fichas ACTIVO solo existen en INSTITUTO.
-  // Fichas PASIVO pueden estar en INSTITUTO o en CUSTODIO.
+  // Se agregaron campos para mejoras: it (instituto), d_c (días en custodio), d_sa (días sin atención)
   let masterData = [
-    // ── ACTIVO en Instituto (no disponibles para despacho) ──────────────────
-    { f: '1001',   r: '12.345.678-9', p: 'Carlos Araya',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
-    { f: '1002',   r: '15.667.889-0', p: 'Ana Zúñiga',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
-    { f: '102060', r: '11.443.221-0', p: 'Roberto Tapia',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
-    { f: '104001', r: '10.111.222-3', p: 'Sofía Herrera',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
-    { f: '104002', r: '14.222.333-4', p: 'Diego Contreras',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO' },
-    // ── PASIVO en Instituto (disponibles para Solicitar Envío) ──────────────
-    { f: '101020', r: '12.334.445-1', p: 'Cesar Jiménez',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '102030', r: '15.223.112-K', p: 'Marta Rivas',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '103013', r: '13.445.998-9', p: 'Beatriz Peña',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '104010', r: '16.543.210-8', p: 'Valentina Soto',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '104011', r: '19.876.543-2', p: 'Patricio Muñoz',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '104012', r: '11.234.567-K', p: 'Camila Vega',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '104013', r: '17.890.123-5', p: 'Rodrigo Fuentes',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '104014', r: '13.567.890-1', p: 'Isadora Campos',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    { f: '104015', r: '20.345.678-7', p: 'Nicolás Ibáñez',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO' },
-    // ── PASIVO en Custodio (disponibles para Solicitar Retorno) ─────────────
-    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',        u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8801',  e: 'PASIVO' },
-    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8802',  e: 'PASIVO' },
-    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9010',  e: 'PASIVO' },
-    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9011',  e: 'PASIVO' },
-    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9200',  e: 'PASIVO' },
-    { f: '105002', r: '16.789.012-3', p: 'Andrés Navarro',      u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9201',  e: 'PASIVO' },
-    { f: '105003', r: '12.890.123-4', p: 'Lorena Espinoza',     u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9202',  e: 'PASIVO' },
-    { f: '105004', r: '18.012.345-6', p: 'Felipe Sepúlveda',    u: 'CUSTODIO',  c: 'CX-2024-004', ff: 'FF-9410',  e: 'PASIVO' },
-    { f: '105005', r: '15.123.456-7', p: 'Gabriela Ortiz',      u: 'CUSTODIO',  c: 'CX-2024-004', ff: 'FF-9411',  e: 'PASIVO' },
-    { f: '105006', r: '11.345.678-9', p: 'Tomás Guerrero',      u: 'CUSTODIO',  c: 'CX-2024-004', ff: 'FF-9412',  e: 'PASIVO' },
-    { f: '105007', r: '19.456.789-K', p: 'Javiera Alarcón',     u: 'CUSTODIO',  c: 'CX-2025-001', ff: 'FF-9600',  e: 'PASIVO' },
-    { f: '105008', r: '13.678.901-1', p: 'Sebastián Pizarro',   u: 'CUSTODIO',  c: 'CX-2025-001', ff: 'FF-9601',  e: 'PASIVO' },
-    { f: '105009', r: '17.901.234-3', p: 'Constanza Medina',    u: 'CUSTODIO',  c: 'CX-2025-002', ff: 'FF-9750',  e: 'PASIVO' },
-    { f: '105010', r: '10.234.567-5', p: 'Martín Villalobos',   u: 'CUSTODIO',  c: 'CX-2025-002', ff: 'FF-9751',  e: 'PASIVO' },
+    { f: '1001',   r: '12.345.678-9', p: 'Carlos Araya',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', d_c: 0,   d_sa: 120 },
+    { f: '1002',   r: '15.667.889-0', p: 'Ana Zúñiga',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', d_c: 0,   d_sa: 45 },
+    { f: '102060', r: '11.443.221-0', p: 'Roberto Tapia',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '132', d_c: 0,   d_sa: 95 },
+    { f: '104001', r: '10.111.222-3', p: 'Sofía Herrera',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '133', d_c: 0,   d_sa: 10 },
+    { f: '104002', r: '14.222.333-4', p: 'Diego Contreras',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', d_c: 0,   d_sa: 200 },
+    { f: '101020', r: '12.334.445-1', p: 'Cesar Jiménez',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', d_c: 0,   d_sa: 0 },
+    { f: '102030', r: '15.223.112-K', p: 'Marta Rivas',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '132', d_c: 0,   d_sa: 0 },
+    { f: '103013', r: '13.445.998-9', p: 'Beatriz Peña',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', d_c: 0,   d_sa: 0 },
+    { f: '104010', r: '16.543.210-8', p: 'Valentina Soto',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', d_c: 0,   d_sa: 0 },
+    { f: '104011', r: '19.876.543-2', p: 'Patricio Muñoz',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '134', d_c: 0,   d_sa: 0 },
+    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',        u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8801',  e: 'PASIVO', it: '131', d_c: 195, d_sa: 0 },
+    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8802',  e: 'PASIVO', it: '131', d_c: 210, d_sa: 0 },
+    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9010',  e: 'PASIVO', it: '132', d_c: 50,  d_sa: 0 },
+    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9011',  e: 'PASIVO', it: '132', d_c: 185, d_sa: 0 },
+    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9200',  e: 'PASIVO', it: '131', d_c: 30,  d_sa: 0 }
   ];
 
-  let solicitudes = [];
+  // Base de datos simulada para la trazabilidad
+  const dbTrazabilidad = {
+    '102040': [
+      { fecha: '12/10/2023 14:30', accion: 'Solicitud Envío Custodio', mov: 'Instituto -> Custodio', user: 'Admin. IT 131 - SANTIAGO' },
+      { fecha: '05/01/2022 09:15', accion: 'Creación Ficha Física', mov: 'Alta en Instituto', user: 'Archivo Central' }
+    ],
+    '102050': [
+      { fecha: '28/09/2023 11:20', accion: 'Solicitud Envío Custodio', mov: 'Instituto -> Custodio', user: 'Admin. Central' }
+    ]
+  };
+
+  // Se agregó campo d_p (días pendiente) para alertas
+  let solicitudes = [
+    { id: 901, it: '131', ficha: '1004', paciente: 'Elena Castro', profesional: 'KINESIOLOGÍA', estado: 'PENDIENTE', fecha: '28/03/2026', d_p: 7 },
+    { id: 902, it: '132', ficha: '1007', paciente: 'Pedro Lira', profesional: 'FISIATRÍA', estado: 'PENDIENTE', fecha: '30/03/2026', d_p: 5 },
+  ];
   let selectedId = null;
   let modoActualCustodio = 'RETIRO';
   let carritoCustodio = [];
   let apiDataCustodio = { caja: null, ff: null };
 
-  // NAVEGACIÓN
+  // NAVEGACIÓN Y PERMISOS CRUZADOS
   function cambiarPerfil() {
-    const p = document.getElementById('profileSelect').value;
-    document.getElementById('view-solicitante').style.display = (p === 'solicitante') ? 'block' : 'none';
-    document.getElementById('view-admin').style.display = (p === 'admin') ? 'block' : 'none';
+    const selector = document.getElementById('profileSelect');
+    const p = selector.value;
+    
+    if (p === 'solicitante') {
+      document.getElementById('view-solicitante').style.display = 'block';
+      document.getElementById('view-admin').style.display = 'none';
+    } else {
+      document.getElementById('view-solicitante').style.display = 'none';
+      document.getElementById('view-admin').style.display = 'block';
+      
+      // Lógica de Permisos
+      if(p === 'admin_central') {
+        currentAdminMode = 'TODOS';
+        document.getElementById('txtAlertaIT').innerText = 'Mostrando red completa';
+      } else {
+        currentAdminMode = p.split('_')[1]; // Extrae '131', '132', etc.
+        document.getElementById('txtAlertaIT').innerText = 'Filtrado por IT ' + currentAdminMode;
+      }
+
+      // Bloquear/Desbloquear filtros de IT según permiso
+      const combosIT = ['fIT', 'cIT', 'hIT', 'solIT'];
+      combosIT.forEach(id => {
+        const combo = document.getElementById(id);
+        if(combo) {
+          if(currentAdminMode !== 'TODOS') {
+            combo.value = currentAdminMode;
+            combo.disabled = true;
+          } else {
+            combo.disabled = false;
+            combo.value = (id === 'solIT') ? '131' : 'TODOS';
+          }
+        }
+      });
+    }
     renderTablas();
     renderPasivas();
     renderTablaCustodio();
+    renderAlertas();
   }
 
   function switchTab(perfil, tabId, btn) {
@@ -451,6 +480,33 @@
     parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     btn.classList.add('active');
+    if(tabId === 'adm-alertas') renderAlertas();
+  }
+
+  // LOG DE TRAZABILIDAD
+  function registrarMovimiento(ficha, accion, mov) {
+    if(!dbTrazabilidad[ficha]) dbTrazabilidad[ficha] = [];
+    const selector = document.getElementById('profileSelect');
+    const user = selector.options[selector.selectedIndex].text;
+    const now = new Date();
+    const strFecha = now.toLocaleDateString() + ' ' + now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    
+    dbTrazabilidad[ficha].unshift({ fecha: strFecha, accion: accion, mov: mov, user: user });
+  }
+
+  function verTrazabilidad(ficha) {
+    document.getElementById('trazFicha').innerText = ficha;
+    const historial = dbTrazabilidad[ficha] || [];
+    const tbody = document.getElementById('trazBody');
+    
+    if(historial.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">Sin movimientos registrados desde la digitalización del sistema.</td></tr>';
+    } else {
+      tbody.innerHTML = historial.map(h => `
+        <tr><td>${h.fecha}</td><td><b>${h.accion}</b></td><td>${h.mov}</td><td>${h.user}</td></tr>
+      `).join('');
+    }
+    document.getElementById('modalTrazabilidad').style.display = 'flex';
   }
 
   // SOLICITUDES
@@ -458,7 +514,6 @@
     const f = document.getElementById('buscFicha').value.trim();
     const p = dbPacientes[f];
     if (!p) return;
-    // Si la ficha ya tiene una solicitud DIGITALIZADA → mostrar modal y limpiar, no continuar
     const yaDigitalizada = solicitudes.find(s => s.ficha === f && s.estado === 'DIGITALIZADA');
     if (yaDigitalizada) {
       document.getElementById('mdFichaNum').textContent   = f;
@@ -467,19 +522,13 @@
       document.getElementById('mdSolFecha').textContent   = yaDigitalizada.fecha;
       document.getElementById('mdSolProfesional').textContent = yaDigitalizada.profesional;
       document.getElementById('modalYaDigitalizada').style.display = 'flex';
-      return; // cortar flujo — no poblar campos
+      return; 
     }
-    // Ficha no digitalizada → flujo normal de solicitud
     document.getElementById('pRut').value    = p.r;
     document.getElementById('pNombre').value = p.n;
     document.getElementById('pApeP').value   = p.ap;
     document.getElementById('pApeM').value   = p.am;
     document.getElementById('pSocial').value = p.s;
-  }
-
-  function cerrarModalYaDigitalizada() {
-    document.getElementById('modalYaDigitalizada').style.display = 'none';
-    limpiarCamposSolicitud();
   }
 
   function limpiarCamposSolicitud() {
@@ -496,11 +545,13 @@
       paciente: dbPacientes[f].n + ' ' + dbPacientes[f].ap,
       profesional: document.getElementById('solProfesion').value, 
       estado: 'PENDIENTE', 
-      fecha: new Date().toLocaleDateString()
+      fecha: new Date().toLocaleDateString(),
+      d_p: 0 // Inicia en 0 días pendiente
     });
     document.getElementById('modalConfirmacion').style.display = 'flex';
     limpiarCamposSolicitud();
     renderTablas();
+    renderAlertas();
   }
 
   function renderTablas() {
@@ -514,7 +565,8 @@
       <tr><td>#${s.id}</td><td>${s.fecha}</td><td>${s.it}</td><td>${s.ficha}</td><td>${s.paciente}</td><td><span class="badge ${s.estado==='PENDIENTE'?'badge-pend':'badge-done'}">${s.estado}</span></td></tr>
     `).join('');
 
-    const itFiltro = document.getElementById('fIT').value;
+    // Aplicar permiso de IT para administrador
+    const itFiltro = currentAdminMode !== 'TODOS' ? currentAdminMode : document.getElementById('fIT').value;
     const estFiltro = document.getElementById('fEstado').value;
     const filtradas = solicitudes.filter(x => (itFiltro === 'TODOS' || x.it === itFiltro) && x.estado === estFiltro);
     document.querySelector('#tablaAdmin tbody').innerHTML = filtradas.map(s => `
@@ -544,17 +596,19 @@
   function renderTablaCustodio() {
     const busqueda = document.getElementById('busquedaGlobal').value.toLowerCase();
     const filtradas = masterData.filter(d =>
+      (currentAdminMode === 'TODOS' || d.it === currentAdminMode) && // Restricción Permiso IT
       (d.f.includes(busqueda) || d.p.toLowerCase().includes(busqueda)) &&
-      (modoActualCustodio === 'RETIRO'
-        ? d.u === 'INSTITUTO' && d.e === 'PASIVO'   // Solo fichas PASIVO pueden salir del instituto
-        : d.u === 'CUSTODIO')                        // Reintegro: todas las que estén en custodio (son PASIVO por definición)
+      (modoActualCustodio === 'RETIRO' ? (d.u === 'INSTITUTO' && d.e === 'PASIVO') : d.u === 'CUSTODIO')
     );
     document.getElementById('tablaPrincipalCustodio').innerHTML = filtradas.map(d => `
       <tr>
-        <td><b>${d.f}</b></td><td>${d.p}</td>
+        <td><b>${d.f}</b> <span style="font-size:9px;color:#888">(IT ${d.it})</span></td><td>${d.p}</td>
         <td><span class="badge-loc ${d.u==='INSTITUTO'?'loc-it':'loc-ext'}">${d.u}</span></td>
         <td style="font-size:10px">${d.c}<br><span class="badge-file">${d.ff}</span></td>
-        <td><button class="btn btn-add" onclick="agregarAlCarrito('${d.f}')">Seleccionar</button></td>
+        <td>
+          <button class="btn btn-add" style="margin-bottom:3px; width:100%" onclick="agregarAlCarrito('${d.f}')">Sumar</button>
+          <button class="btn btn-secondary" style="font-size:9px; padding:4px; width:100%" onclick="verTrazabilidad('${d.f}')">Historial</button>
+        </td>
       </tr>
     `).join('');
   }
@@ -599,8 +653,6 @@
     `).join('');
   }
 
-  function removerCus(idx) { carritoCustodio.splice(idx, 1); renderCarritoCustodio(); }
-
   function procesarOperacion() {
     if (modoActualCustodio === 'RETIRO') {
       const caja = apiDataCustodio.caja;
@@ -613,20 +665,20 @@
       const ticket = "REQ-" + Math.floor(Math.random()*90000 + 10000);
       document.getElementById('lblCajaLabel').innerText = "SEGUIMIENTO";
       document.getElementById('lblCajaID').innerText = ticket;
-      document.getElementById('msgConfirmacion').innerText = `Solicitud de reingreso registrada con éxito para ${carritoCustodio.length} fichas. El transportista retirará las fichas del custodio en las próximas 24 horas.`;
+      document.getElementById('msgConfirmacion').innerText = `Solicitud de reingreso registrada con éxito. El transportista retirará las fichas del custodio en las próximas 24 hrs.`;
       document.getElementById('botonesImpresion').style.display = 'none';
       document.getElementById('printTitle').innerText = 'Confirmación de Solicitud de Retorno';
     }
     document.getElementById('modalPrint').style.display = 'flex';
 
-    // Solo actualiza ubicación física (u). El estado propio de la ficha (e) NUNCA cambia aquí.
     carritoCustodio.forEach(c => {
       let real = masterData.find(m => m.f === c.f);
       if (modoActualCustodio === 'RETIRO') {
-        real.u = 'CUSTODIO'; real.c = apiDataCustodio.caja; real.ff = c.tempFF;
+        real.u = 'CUSTODIO'; real.c = apiDataCustodio.caja; real.ff = c.tempFF; real.d_c = 0;
+        registrarMovimiento(real.f, 'Despacho a Custodio', 'Instituto -> Custodio');
       } else {
-        real.u = 'INSTITUTO'; real.c = 'N/A'; real.ff = 'N/A';
-        // real.e permanece intacto (sigue siendo PASIVO)
+        real.u = 'INSTITUTO'; real.c = 'N/A'; real.ff = 'N/A'; real.d_c = 0;
+        registrarMovimiento(real.f, 'Retorno de Custodio', 'Custodio -> Instituto');
       }
     });
   }
@@ -643,13 +695,10 @@
     renderTablaCustodio();
     renderCarritoCustodio();
     renderPasivas();
+    renderAlertas();
   }
 
-  // FICHAS PASIVAS
-  // El filtro Estado filtra por el campo 'e' (estado propio de la ficha: ACTIVO/PASIVO),
-  // que es independiente de la ubicación física.
-  // Fichas ACTIVO solo pueden estar en INSTITUTO.
-  // Fichas PASIVO pueden estar en INSTITUTO o en CUSTODIO, y permanecen PASIVO sin importar movimientos.
+  // FICHAS PASIVAS / ARCHIVO Y TRAZABILIDAD
   function renderPasivas() {
     const body = document.getElementById('bodyPasivas');
     const u    = document.getElementById('pUbic').value;
@@ -657,36 +706,74 @@
     const b    = document.getElementById('pBusca').value.toLowerCase();
 
     const filtradas = masterData.filter(p =>
+      (currentAdminMode === 'TODOS' || p.it === currentAdminMode) && // Restricción Permiso IT
       (u   === 'TODAS'  || p.u === u) &&
       (est === 'TODOS'  || p.e === est) &&
       (b   === ''       || p.f.includes(b) || p.r.includes(b) || p.p.toLowerCase().includes(b))
     );
 
     body.innerHTML = filtradas.length ? filtradas.map(p => {
-      const badgeStyle = p.e === 'ACTIVO'
-        ? 'background:#d4edda; color:#155724;'
-        : 'background:#fff3cd; color:#856404;';
-      const ubLabel = p.u === 'INSTITUTO' ? 'IT SANTIAGO' : 'CUSTODIO EXTERNO';
+      const badgeStyle = p.e === 'ACTIVO' ? 'background:#d4edda; color:#155724;' : 'background:#fff3cd; color:#856404;';
+      const ubLabel = p.u === 'INSTITUTO' ? 'IT ' + p.it : 'CUSTODIO';
       return `
         <tr>
-          <td>${p.f}</td>
+          <td><b>${p.f}</b></td>
+          <td>${p.it}</td>
           <td>${p.r}</td>
           <td>${p.p}</td>
           <td>${ubLabel}</td>
           <td><span class="badge" style="${badgeStyle}">${p.e}</span></td>
-          <td>${p.c} / ${p.ff}</td>
+          <td style="font-size:10px">${p.c} / ${p.ff}</td>
+          <td><button class="btn btn-info" style="font-size:10px; padding:4px 8px;" onclick="verTrazabilidad('${p.f}')">Ver Historial</button></td>
         </tr>`;
-    }).join('') : '<tr><td colspan="6" style="text-align:center; padding:20px">No se encontraron registros.</td></tr>';
+    }).join('') : '<tr><td colspan="8" style="text-align:center; padding:20px">No se encontraron registros.</td></tr>';
   }
 
+  // ALERTAS Y VENCIMIENTOS
+  function renderAlertas() {
+    const tableBody = document.getElementById('bodyAlertas');
+    let htmlAlertas = '';
+    let c_custodio = 0, c_digital = 0, c_activas = 0;
+
+    // 1. Custodio > 180 días
+    masterData.filter(d => d.u === 'CUSTODIO' && d.d_c > 180 && (currentAdminMode === 'TODOS' || d.it === currentAdminMode)).forEach(d => {
+      c_custodio++;
+      htmlAlertas += `<tr><td><span class="badge" style="background:#fff5f5; color:#e53e3e; border:1px solid #e53e3e">Alerta Custodio Prolongado</span></td><td>${d.f}</td><td>${d.it}</td><td>${d.p}</td><td><b style="color:#e53e3e">${d.d_c} días</b></td></tr>`;
+    });
+
+    // 2. Pendientes Digitalización > 5 días
+    solicitudes.filter(s => s.estado === 'PENDIENTE' && s.d_p > 5 && (currentAdminMode === 'TODOS' || s.it === currentAdminMode)).forEach(s => {
+      c_digital++;
+      htmlAlertas += `<tr><td><span class="badge" style="background:#fffff0; color:#d69e2e; border:1px solid #d69e2e">Retraso SLA Digitalización</span></td><td>${s.ficha}</td><td>${s.it}</td><td>${s.paciente}</td><td><b style="color:#d69e2e">${s.d_p} días</b> hábiles</td></tr>`;
+    });
+
+    // 3. Activas sin Atención > 90 días
+    masterData.filter(d => d.e === 'ACTIVO' && d.d_sa > 90 && (currentAdminMode === 'TODOS' || d.it === currentAdminMode)).forEach(d => {
+      c_activas++;
+      htmlAlertas += `<tr><td><span class="badge" style="background:#ebf8ff; color:#3182ce; border:1px solid #3182ce">Revisión de Vigencia Clínica</span></td><td>${d.f}</td><td>${d.it}</td><td>${d.p}</td><td><b style="color:#3182ce">${d.d_sa} días</b> sin atención</td></tr>`;
+    });
+
+    document.getElementById('countCustodio').innerText = c_custodio;
+    document.getElementById('countDigital').innerText = c_digital;
+    document.getElementById('countActivas').innerText = c_activas;
+    
+    if(htmlAlertas === '') htmlAlertas = '<tr><td colspan="5" style="text-align:center; padding:15px; color:#155724;">✓ Todo en orden. No hay alertas activas para este instituto.</td></tr>';
+    tableBody.innerHTML = htmlAlertas;
+  }
+
+  // CUMPLIMIENTO KPI
   function calcularKPI() { renderCumplimiento(); }
   function renderCumplimiento() {
     const tbody = document.getElementById('bodyCumplimiento');
     const estactivos = [...new Set(solicitudes.map(s => s.profesional))];
     if(estactivos.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">Sin datos.</td></tr>'; return; }
     tbody.innerHTML = estactivos.map(e => {
-      const sol = solicitudes.filter(s => s.profesional === e).length;
-      const dig = solicitudes.filter(s => s.profesional === e && s.estado === 'DIGITALIZADA').length;
+      // Filtrar por instituto seleccionado
+      const itCumplimiento = document.getElementById('cIT').value;
+      const solTotales = solicitudes.filter(s => s.profesional === e && (itCumplimiento === 'TODOS' || s.it === itCumplimiento));
+      if (solTotales.length === 0) return '';
+      const sol = solTotales.length;
+      const dig = solTotales.filter(s => s.estado === 'DIGITALIZADA').length;
       return `<tr><td><b>${e}</b></td><td>${sol}</td><td>${dig}</td><td style="color:var(--tel-red); font-weight:bold">${((dig/sol)*100).toFixed(1)}%</td></tr>`;
     }).join('');
   }
@@ -712,13 +799,18 @@
     document.getElementById('mcFileName').textContent = f ? f.name : 'Ningún archivo seleccionado';
     if (f) {
       const item = solicitudes.find(x => x.id === selectedId);
-      if (item) item.estado = 'DIGITALIZADA';
+      if (item) {
+        item.estado = 'DIGITALIZADA';
+        registrarMovimiento(item.ficha, 'Documento Digitalizado', 'Registro en Repositorio HCD');
+      }
       cerrarModalDigitalizar();
       selectedId = null;
       renderTablas();
+      renderAlertas();
     }
   }
 
+  // UTILIDADES
   function filtrarTipo() {
     const val = document.getElementById('mcTipoInput').value.toLowerCase();
     document.querySelectorAll('.mc-opt').forEach(opt => {
@@ -734,12 +826,11 @@
   }
   function seleccionarTipo(val) { document.getElementById('mcTipoInput').value = val; cerrarDropdown(); }
   function limpiarTipo()        { document.getElementById('mcTipoInput').value = ''; cerrarDropdown(); }
+  function cerrarModal(id)      { document.getElementById(id).style.display = 'none'; }
 
   document.addEventListener('click', e => { if (!e.target.closest('#mcTipoWrap')) cerrarDropdown(); });
 
-  function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-
-  window.onload = () => { renderTablas(); renderPasivas(); renderTablaCustodio(); };
+  window.onload = () => { renderTablas(); renderPasivas(); renderTablaCustodio(); renderAlertas(); };
 </script>
 </body>
 </html>
