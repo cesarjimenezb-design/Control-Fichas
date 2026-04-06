@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema Control de Fichas Clínicas v4.2 - Mejorado</title>
+  <title>Sistema Control de Fichas Clínicas v4.3</title>
   <style>
     /* ESTILOS ORIGINALES ARCHIVOPRUEBA.HTML */
     :root {
@@ -86,20 +86,12 @@
     .label-preview { border: 2px dashed #ccc; padding: 15px; margin: 15px 0; background: #fafafa; display: flex; flex-direction: column; gap: 10px; }
     .barcode-sim { height: 40px; background: repeating-linear-gradient(90deg, #000, #000 2px, #fff 2px, #fff 4px); width: 80%; margin: 0 auto; }
 
-    /* ESTILOS ALERTAS Y TRAZABILIDAD */
-    .alert-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-    .alert-card { padding: 15px; border-radius: 8px; border-left: 4px solid; display: flex; flex-direction: column; gap: 10px; }
-    .alert-danger { background: #fff5f5; border-color: #e53e3e; }
-    .alert-warning { background: #fffff0; border-color: #d69e2e; }
-    .alert-info { background: #ebf8ff; border-color: #3182ce; }
-    .alert-card h3 { margin: 0; font-size: 13px; color: #2d3748; }
-    .alert-card .count { font-size: 24px; font-weight: 800; color: #1a202c; }
-    
+    /* ESTILOS TRAZABILIDAD */
     .table-trazabilidad { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
     .table-trazabilidad th { background: #e2e8f0; color: #4a5568; padding: 8px; }
     .table-trazabilidad td { padding: 8px; border-bottom: 1px solid #edf2f7; text-align: left; }
 
-    /* ESTILOS MODAL CARGA DE DOCUMENTOS (Mantenidos igual) */
+    /* ESTILOS MODAL CARGA DE DOCUMENTOS */
     .modal-carga-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; justify-content: center; align-items: center; z-index: 1000; }
     .modal-carga-box { background: white; width: 620px; border-radius: 6px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .modal-carga-header { padding: 20px 24px 14px; border-bottom: 2px solid #e9ecef; font-size: 16px; font-weight: 600; color: #212529; }
@@ -192,7 +184,6 @@
       <button class="tab-btn" onclick="switchTab('admin', 'adm-custodio', this)">Movimiento Ficha Externo</button>
       <button class="tab-btn" onclick="switchTab('admin', 'adm-cumplimiento', this)">Nivel Cumplimiento</button>
       <button class="tab-btn" onclick="switchTab('admin', 'adm-pasivas', this)">Fichas Pasivas / Archivo</button>
-      <button class="tab-btn" onclick="switchTab('admin', 'adm-alertas', this)">Alertas y Vencimientos</button>
     </nav>
 
     <div id="adm-bandeja" class="panel active">
@@ -263,35 +254,6 @@
       <table id="tablaPasivas">
         <thead><tr><th>N° Ficha</th><th>IT</th><th>RUT</th><th>Paciente</th><th>Ubicación Actual</th><th>Estado Ficha</th><th>Detalle/Caja</th><th>Trazabilidad</th></tr></thead>
         <tbody id="bodyPasivas"></tbody>
-      </table>
-    </div>
-
-    <div id="adm-alertas" class="panel">
-      <h2>Panel de Alertas y Vencimientos <small style="font-size: 11px; color: #666; float: right; font-weight:normal;" id="txtAlertaIT">Mostrando red completa</small></h2>
-      <p style="font-size: 12px; margin-bottom: 20px; color: #555;">Monitoreo en tiempo real de desviaciones operativas y normativas (Ley 20.584).</p>
-      
-      <div class="alert-grid">
-        <div class="alert-card alert-danger">
-          <h3>Fichas Custodio > 180 días</h3>
-          <div class="count" id="countCustodio">0</div>
-          <p style="font-size:10px; margin:0; color:#555;">Exceden el tiempo de retención sugerido fuera del instituto.</p>
-        </div>
-        <div class="alert-card alert-warning">
-          <h3>Pendientes Digitalización > 5 días</h3>
-          <div class="count" id="countDigital">0</div>
-          <p style="font-size:10px; margin:0; color:#555;">Solicitudes que superan el SLA máximo de respuesta.</p>
-        </div>
-        <div class="alert-card alert-info">
-          <h3>Activas sin Atención > 90 días</h3>
-          <div class="count" id="countActivas">0</div>
-          <p style="font-size:10px; margin:0; color:#555;">Posibles candidatas a ser declaradas como ficha PASIVA.</p>
-        </div>
-      </div>
-
-      <h3 style="font-size: 13px; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Detalle de Alertas Activas</h3>
-      <table id="tablaAlertas" style="margin-top: 15px;">
-        <thead><tr><th>Tipo de Alerta</th><th>N° Ficha</th><th>IT</th><th>Paciente</th><th>Días de Desviación</th></tr></thead>
-        <tbody id="bodyAlertas"></tbody>
       </table>
     </div>
 
@@ -382,7 +344,7 @@
   const dbPacientes = {
     '1001': { r:'12.345.678-9', n:'Carlos', ap:'Araya', am:'Guzmán', s:'' },
     '1002': { r:'15.667.889-0', n:'Ana', ap:'Zúñiga', am:'Pérez', s:'' },
-    '1003': { r:'18.112.334-5', n:'Jasson', ap:'Olmos', am:'Alvarez', s:'' },
+    '1003': { r:'18.112.334-5', n:'jasson', ap:'Olmos', am:'Alvarez', s:'' },
     '1004': { r:'9.887.654-3', n:'Elena', ap:'Castro', am:'Beltrán', s:'' },
     '1005': { r:'20.443.221-K', n:'Mario', ap:'Salinas', am:'Rojas', s:'' },
     '1006': { r:'11.223.334-4', n:'Julia', ap:'Vargas', am:'Soto', s:'' },
@@ -392,23 +354,22 @@
     '1010': { r:'13.445.667-8', n:'Beatriz', ap:'Meza', am:'Peña', s:'' }
   };
 
-  // Se agregaron campos para mejoras: it (instituto), d_c (días en custodio), d_sa (días sin atención)
   let masterData = [
-    { f: '1001',   r: '12.345.678-9', p: 'Carlos Araya',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', d_c: 0,   d_sa: 120 },
-    { f: '1002',   r: '15.667.889-0', p: 'Ana Zúñiga',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', d_c: 0,   d_sa: 45 },
-    { f: '102060', r: '11.443.221-0', p: 'Roberto Tapia',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '132', d_c: 0,   d_sa: 95 },
-    { f: '104001', r: '10.111.222-3', p: 'Sofía Herrera',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '133', d_c: 0,   d_sa: 10 },
-    { f: '104002', r: '14.222.333-4', p: 'Diego Contreras',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', d_c: 0,   d_sa: 200 },
-    { f: '101020', r: '12.334.445-1', p: 'Cesar Jiménez',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', d_c: 0,   d_sa: 0 },
-    { f: '102030', r: '15.223.112-K', p: 'Marta Rivas',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '132', d_c: 0,   d_sa: 0 },
-    { f: '103013', r: '13.445.998-9', p: 'Beatriz Peña',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', d_c: 0,   d_sa: 0 },
-    { f: '104010', r: '16.543.210-8', p: 'Valentina Soto',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', d_c: 0,   d_sa: 0 },
-    { f: '104011', r: '19.876.543-2', p: 'Patricio Muñoz',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '134', d_c: 0,   d_sa: 0 },
-    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',        u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8801',  e: 'PASIVO', it: '131', d_c: 195, d_sa: 0 },
-    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8802',  e: 'PASIVO', it: '131', d_c: 210, d_sa: 0 },
-    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9010',  e: 'PASIVO', it: '132', d_c: 50,  d_sa: 0 },
-    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9011',  e: 'PASIVO', it: '132', d_c: 185, d_sa: 0 },
-    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9200',  e: 'PASIVO', it: '131', d_c: 30,  d_sa: 0 }
+    { f: '1001',   r: '12.345.678-9', p: 'Carlos Araya',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131' },
+    { f: '1002',   r: '15.667.889-0', p: 'Ana Zúñiga',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131' },
+    { f: '102060', r: '11.443.221-0', p: 'Roberto Tapia',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '132' },
+    { f: '104001', r: '10.111.222-3', p: 'Sofía Herrera',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '133' },
+    { f: '104002', r: '14.222.333-4', p: 'Diego Contreras',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131' },
+    { f: '101020', r: '12.334.445-1', p: 'Cesar Jiménez',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131' },
+    { f: '102030', r: '15.223.112-K', p: 'Marta Rivas',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '132' },
+    { f: '103013', r: '13.445.998-9', p: 'Beatriz Peña',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131' },
+    { f: '104010', r: '16.543.210-8', p: 'Valentina Soto',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131' },
+    { f: '104011', r: '19.876.543-2', p: 'Patricio Muñoz',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '134' },
+    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',        u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8801',  e: 'PASIVO', it: '131' },
+    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8802',  e: 'PASIVO', it: '131' },
+    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9010',  e: 'PASIVO', it: '132' },
+    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9011',  e: 'PASIVO', it: '132' },
+    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9200',  e: 'PASIVO', it: '131' }
   ];
 
   // Base de datos simulada para la trazabilidad
@@ -422,10 +383,9 @@
     ]
   };
 
-  // Se agregó campo d_p (días pendiente) para alertas
   let solicitudes = [
-    { id: 901, it: '131', ficha: '1004', paciente: 'Elena Castro', profesional: 'KINESIOLOGÍA', estado: 'PENDIENTE', fecha: '28/03/2026', d_p: 7 },
-    { id: 902, it: '132', ficha: '1007', paciente: 'Pedro Lira', profesional: 'FISIATRÍA', estado: 'PENDIENTE', fecha: '30/03/2026', d_p: 5 },
+    { id: 901, it: '131', ficha: '1004', paciente: 'Elena Castro', profesional: 'KINESIOLOGÍA', estado: 'PENDIENTE', fecha: '28/03/2026' },
+    { id: 902, it: '132', ficha: '1007', paciente: 'Pedro Lira', profesional: 'FISIATRÍA', estado: 'PENDIENTE', fecha: '30/03/2026' },
   ];
   let selectedId = null;
   let modoActualCustodio = 'RETIRO';
@@ -447,10 +407,8 @@
       // Lógica de Permisos
       if(p === 'admin_central') {
         currentAdminMode = 'TODOS';
-        document.getElementById('txtAlertaIT').innerText = 'Mostrando red completa';
       } else {
         currentAdminMode = p.split('_')[1]; // Extrae '131', '132', etc.
-        document.getElementById('txtAlertaIT').innerText = 'Filtrado por IT ' + currentAdminMode;
       }
 
       // Bloquear/Desbloquear filtros de IT según permiso
@@ -471,7 +429,6 @@
     renderTablas();
     renderPasivas();
     renderTablaCustodio();
-    renderAlertas();
   }
 
   function switchTab(perfil, tabId, btn) {
@@ -480,7 +437,6 @@
     parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     btn.classList.add('active');
-    if(tabId === 'adm-alertas') renderAlertas();
   }
 
   // LOG DE TRAZABILIDAD
@@ -545,13 +501,11 @@
       paciente: dbPacientes[f].n + ' ' + dbPacientes[f].ap,
       profesional: document.getElementById('solProfesion').value, 
       estado: 'PENDIENTE', 
-      fecha: new Date().toLocaleDateString(),
-      d_p: 0 // Inicia en 0 días pendiente
+      fecha: new Date().toLocaleDateString()
     });
     document.getElementById('modalConfirmacion').style.display = 'flex';
     limpiarCamposSolicitud();
     renderTablas();
-    renderAlertas();
   }
 
   function renderTablas() {
@@ -674,10 +628,10 @@
     carritoCustodio.forEach(c => {
       let real = masterData.find(m => m.f === c.f);
       if (modoActualCustodio === 'RETIRO') {
-        real.u = 'CUSTODIO'; real.c = apiDataCustodio.caja; real.ff = c.tempFF; real.d_c = 0;
+        real.u = 'CUSTODIO'; real.c = apiDataCustodio.caja; real.ff = c.tempFF;
         registrarMovimiento(real.f, 'Despacho a Custodio', 'Instituto -> Custodio');
       } else {
-        real.u = 'INSTITUTO'; real.c = 'N/A'; real.ff = 'N/A'; real.d_c = 0;
+        real.u = 'INSTITUTO'; real.c = 'N/A'; real.ff = 'N/A';
         registrarMovimiento(real.f, 'Retorno de Custodio', 'Custodio -> Instituto');
       }
     });
@@ -695,7 +649,6 @@
     renderTablaCustodio();
     renderCarritoCustodio();
     renderPasivas();
-    renderAlertas();
   }
 
   // FICHAS PASIVAS / ARCHIVO Y TRAZABILIDAD
@@ -727,38 +680,6 @@
           <td><button class="btn btn-info" style="font-size:10px; padding:4px 8px;" onclick="verTrazabilidad('${p.f}')">Ver Historial</button></td>
         </tr>`;
     }).join('') : '<tr><td colspan="8" style="text-align:center; padding:20px">No se encontraron registros.</td></tr>';
-  }
-
-  // ALERTAS Y VENCIMIENTOS
-  function renderAlertas() {
-    const tableBody = document.getElementById('bodyAlertas');
-    let htmlAlertas = '';
-    let c_custodio = 0, c_digital = 0, c_activas = 0;
-
-    // 1. Custodio > 180 días
-    masterData.filter(d => d.u === 'CUSTODIO' && d.d_c > 180 && (currentAdminMode === 'TODOS' || d.it === currentAdminMode)).forEach(d => {
-      c_custodio++;
-      htmlAlertas += `<tr><td><span class="badge" style="background:#fff5f5; color:#e53e3e; border:1px solid #e53e3e">Alerta Custodio Prolongado</span></td><td>${d.f}</td><td>${d.it}</td><td>${d.p}</td><td><b style="color:#e53e3e">${d.d_c} días</b></td></tr>`;
-    });
-
-    // 2. Pendientes Digitalización > 5 días
-    solicitudes.filter(s => s.estado === 'PENDIENTE' && s.d_p > 5 && (currentAdminMode === 'TODOS' || s.it === currentAdminMode)).forEach(s => {
-      c_digital++;
-      htmlAlertas += `<tr><td><span class="badge" style="background:#fffff0; color:#d69e2e; border:1px solid #d69e2e">Retraso SLA Digitalización</span></td><td>${s.ficha}</td><td>${s.it}</td><td>${s.paciente}</td><td><b style="color:#d69e2e">${s.d_p} días</b> hábiles</td></tr>`;
-    });
-
-    // 3. Activas sin Atención > 90 días
-    masterData.filter(d => d.e === 'ACTIVO' && d.d_sa > 90 && (currentAdminMode === 'TODOS' || d.it === currentAdminMode)).forEach(d => {
-      c_activas++;
-      htmlAlertas += `<tr><td><span class="badge" style="background:#ebf8ff; color:#3182ce; border:1px solid #3182ce">Revisión de Vigencia Clínica</span></td><td>${d.f}</td><td>${d.it}</td><td>${d.p}</td><td><b style="color:#3182ce">${d.d_sa} días</b> sin atención</td></tr>`;
-    });
-
-    document.getElementById('countCustodio').innerText = c_custodio;
-    document.getElementById('countDigital').innerText = c_digital;
-    document.getElementById('countActivas').innerText = c_activas;
-    
-    if(htmlAlertas === '') htmlAlertas = '<tr><td colspan="5" style="text-align:center; padding:15px; color:#155724;">✓ Todo en orden. No hay alertas activas para este instituto.</td></tr>';
-    tableBody.innerHTML = htmlAlertas;
   }
 
   // CUMPLIMIENTO KPI
@@ -806,7 +727,6 @@
       cerrarModalDigitalizar();
       selectedId = null;
       renderTablas();
-      renderAlertas();
     }
   }
 
@@ -830,7 +750,7 @@
 
   document.addEventListener('click', e => { if (!e.target.closest('#mcTipoWrap')) cerrarDropdown(); });
 
-  window.onload = () => { renderTablas(); renderPasivas(); renderTablaCustodio(); renderAlertas(); };
+  window.onload = () => { renderTablas(); renderPasivas(); renderTablaCustodio(); };
 </script>
 </body>
 </html>
