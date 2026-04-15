@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema Control de Fichas Clínicas v4.3</title>
+  <title>Sistema Control de Fichas Clínicas v4.3 - Actualizado</title>
   <style>
-    /* ESTILOS ORIGINALES ARCHIVOPRUEBA.HTML */
+    /* ESTILOS ORIGINALES */
     :root {
       --tel-red: #e30613;
       --tel-red-dark: #b0050f;
@@ -64,7 +64,7 @@
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
     .modal-content { background: white; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
 
-    /* ESTILOS ADICIONALES CUSTODIOEXTERNO.HTML */
+    /* ESTILOS ADICIONALES */
     .nav-op { display: flex; gap: 5px; margin-bottom: 20px; background: #eee; padding: 5px; border-radius: 6px; width: fit-content; }
     .nav-btn { padding: 8px 20px; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; color: #666; transition: 0.3s; font-size: 11px; }
     .nav-btn.active { background: white; color: var(--tel-red); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -86,12 +86,10 @@
     .label-preview { border: 2px dashed #ccc; padding: 15px; margin: 15px 0; background: #fafafa; display: flex; flex-direction: column; gap: 10px; }
     .barcode-sim { height: 40px; background: repeating-linear-gradient(90deg, #000, #000 2px, #fff 2px, #fff 4px); width: 80%; margin: 0 auto; }
 
-    /* ESTILOS TRAZABILIDAD */
     .table-trazabilidad { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
     .table-trazabilidad th { background: #e2e8f0; color: #4a5568; padding: 8px; }
     .table-trazabilidad td { padding: 8px; border-bottom: 1px solid #edf2f7; text-align: left; }
 
-    /* ESTILOS MODAL CARGA DE DOCUMENTOS */
     .modal-carga-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; justify-content: center; align-items: center; z-index: 1000; }
     .modal-carga-box { background: white; width: 620px; border-radius: 6px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .modal-carga-header { padding: 20px 24px 14px; border-bottom: 2px solid #e9ecef; font-size: 16px; font-weight: 600; color: #212529; }
@@ -194,7 +192,17 @@
         <button class="btn btn-primary" onclick="abrirModalDigitalizar()" id="btnDigit">Procesar Selección</button>
       </div>
       <table id="tablaAdmin">
-        <thead><tr><th>ID</th><th>IT</th><th>Ficha</th><th>Profesional</th><th>Paciente</th><th>Estado</th></tr></thead>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>IT</th>
+                <th>Ficha</th>
+                <th>Paciente</th>
+                <th>Asistencial</th>
+                <th>Profesional</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
         <tbody></tbody>
       </table>
     </div>
@@ -239,7 +247,15 @@
         <button class="btn btn-excel" onclick="exportarExcel()">Exportar Excel</button>
       </div>
       <table id="tablaCumplimiento">
-        <thead><tr><th>Profesional</th><th>Total Solicitadas</th><th>Total Digitalizadas</th><th>% Cumplimiento Real</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Instituto</th>
+                <th>Profesional</th>
+                <th>Total Solicitadas</th>
+                <th>Total Digitalizadas</th>
+                <th>% Cumplimiento Real</th>
+            </tr>
+        </thead>
         <tbody id="bodyCumplimiento"></tbody>
       </table>
     </div>
@@ -338,13 +354,13 @@
 </div>
 
 <script>
-  // VARIABLES DE PERMISOS
-  let currentAdminMode = 'TODOS'; // 'TODOS', '131', '132', etc.
+  // VARIABLES Y DATOS
+  let currentAdminMode = 'TODOS'; 
 
   const dbPacientes = {
     '1001': { r:'12.345.678-9', n:'Carlos', ap:'Araya', am:'Guzmán', s:'' },
     '1002': { r:'15.667.889-0', n:'Ana', ap:'Zúñiga', am:'Pérez', s:'' },
-    '1003': { r:'18.112.334-5', n:'jasson', ap:'Olmos', am:'Alvarez', s:'' },
+    '1003': { r:'18.112.334-5', n:'Roberto', ap:'Méndez', am:'Tapia', s:'' },
     '1004': { r:'9.887.654-3', n:'Elena', ap:'Castro', am:'Beltrán', s:'' },
     '1005': { r:'20.443.221-K', n:'Mario', ap:'Salinas', am:'Rojas', s:'' },
     '1006': { r:'11.223.334-4', n:'Julia', ap:'Vargas', am:'Soto', s:'' },
@@ -372,7 +388,6 @@
     { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9200',  e: 'PASIVO', it: '131' }
   ];
 
-  // Base de datos simulada para la trazabilidad
   const dbTrazabilidad = {
     '102040': [
       { fecha: '12/10/2023 14:30', accion: 'Solicitud Envío Custodio', mov: 'Instituto -> Custodio', user: 'Admin. IT 131 - SANTIAGO' },
@@ -384,15 +399,15 @@
   };
 
   let solicitudes = [
-    { id: 901, it: '131', ficha: '1004', paciente: 'Elena Castro', profesional: 'KINESIOLOGÍA', estado: 'PENDIENTE', fecha: '28/03/2026' },
-    { id: 902, it: '132', ficha: '1007', paciente: 'Pedro Lira', profesional: 'FISIATRÍA', estado: 'PENDIENTE', fecha: '30/03/2026' },
+    { id: 901, it: '131', ficha: '1004', paciente: 'Elena Castro', profesional: 'KINESIOLOGÍA', nombreSolicitante: 'Juan Pérez', estado: 'PENDIENTE', fecha: '28/03/2026' },
+    { id: 902, it: '132', ficha: '1007', paciente: 'Pedro Lira', profesional: 'FISIATRÍA', nombreSolicitante: 'María González', estado: 'PENDIENTE', fecha: '30/03/2026' },
   ];
   let selectedId = null;
   let modoActualCustodio = 'RETIRO';
   let carritoCustodio = [];
   let apiDataCustodio = { caja: null, ff: null };
 
-  // NAVEGACIÓN Y PERMISOS CRUZADOS
+  // FUNCIONES DE NAVEGACIÓN Y PERMISOS
   function cambiarPerfil() {
     const selector = document.getElementById('profileSelect');
     const p = selector.value;
@@ -404,14 +419,12 @@
       document.getElementById('view-solicitante').style.display = 'none';
       document.getElementById('view-admin').style.display = 'block';
       
-      // Lógica de Permisos
       if(p === 'admin_central') {
         currentAdminMode = 'TODOS';
       } else {
-        currentAdminMode = p.split('_')[1]; // Extrae '131', '132', etc.
+        currentAdminMode = p.split('_')[1];
       }
 
-      // Bloquear/Desbloquear filtros de IT según permiso
       const combosIT = ['fIT', 'cIT', 'hIT', 'solIT'];
       combosIT.forEach(id => {
         const combo = document.getElementById(id);
@@ -439,14 +452,13 @@
     btn.classList.add('active');
   }
 
-  // LOG DE TRAZABILIDAD
+  // TRAZABILIDAD
   function registrarMovimiento(ficha, accion, mov) {
     if(!dbTrazabilidad[ficha]) dbTrazabilidad[ficha] = [];
     const selector = document.getElementById('profileSelect');
     const user = selector.options[selector.selectedIndex].text;
     const now = new Date();
     const strFecha = now.toLocaleDateString() + ' ' + now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-    
     dbTrazabilidad[ficha].unshift({ fecha: strFecha, accion: accion, mov: mov, user: user });
   }
 
@@ -454,9 +466,8 @@
     document.getElementById('trazFicha').innerText = ficha;
     const historial = dbTrazabilidad[ficha] || [];
     const tbody = document.getElementById('trazBody');
-    
     if(historial.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">Sin movimientos registrados desde la digitalización del sistema.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">Sin movimientos registrados.</td></tr>';
     } else {
       tbody.innerHTML = historial.map(h => `
         <tr><td>${h.fecha}</td><td><b>${h.accion}</b></td><td>${h.mov}</td><td>${h.user}</td></tr>
@@ -500,6 +511,7 @@
       ficha: f, 
       paciente: dbPacientes[f].n + ' ' + dbPacientes[f].ap,
       profesional: document.getElementById('solProfesion').value, 
+      nombreSolicitante: 'Usuario Demo', // Simulado
       estado: 'PENDIENTE', 
       fecha: new Date().toLocaleDateString()
     });
@@ -519,13 +531,20 @@
       <tr><td>#${s.id}</td><td>${s.fecha}</td><td>${s.it}</td><td>${s.ficha}</td><td>${s.paciente}</td><td><span class="badge ${s.estado==='PENDIENTE'?'badge-pend':'badge-done'}">${s.estado}</span></td></tr>
     `).join('');
 
-    // Aplicar permiso de IT para administrador
     const itFiltro = currentAdminMode !== 'TODOS' ? currentAdminMode : document.getElementById('fIT').value;
     const estFiltro = document.getElementById('fEstado').value;
     const filtradas = solicitudes.filter(x => (itFiltro === 'TODOS' || x.it === itFiltro) && x.estado === estFiltro);
+    
+    // TABLA ADMIN ACTUALIZADA SEGÚN SOLICITUD
     document.querySelector('#tablaAdmin tbody').innerHTML = filtradas.map(s => `
       <tr class="${selectedId===s.id?'selected':''}" onclick="selectedId=${s.id}; renderTablas();">
-        <td>#${s.id}</td><td>${s.it}</td><td>${s.ficha}</td><td>${s.profesional}</td><td>${s.paciente}</td><td>${s.estado}</td>
+        <td>#${s.id}</td>
+        <td>${s.it}</td>
+        <td>${s.ficha}</td>
+        <td>${s.paciente}</td>
+        <td>${s.profesional}</td>
+        <td>${s.nombreSolicitante || 'Profesional Teletón'}</td>
+        <td>${s.estado}</td>
       </tr>
     `).join('');
     renderCumplimiento();
@@ -550,7 +569,7 @@
   function renderTablaCustodio() {
     const busqueda = document.getElementById('busquedaGlobal').value.toLowerCase();
     const filtradas = masterData.filter(d =>
-      (currentAdminMode === 'TODOS' || d.it === currentAdminMode) && // Restricción Permiso IT
+      (currentAdminMode === 'TODOS' || d.it === currentAdminMode) && 
       (d.f.includes(busqueda) || d.p.toLowerCase().includes(busqueda)) &&
       (modoActualCustodio === 'RETIRO' ? (d.u === 'INSTITUTO' && d.e === 'PASIVO') : d.u === 'CUSTODIO')
     );
@@ -619,9 +638,9 @@
       const ticket = "REQ-" + Math.floor(Math.random()*90000 + 10000);
       document.getElementById('lblCajaLabel').innerText = "SEGUIMIENTO";
       document.getElementById('lblCajaID').innerText = ticket;
-      document.getElementById('msgConfirmacion').innerText = `Solicitud de reingreso registrada con éxito. El transportista retirará las fichas del custodio en las próximas 24 hrs.`;
+      document.getElementById('msgConfirmacion').innerText = `Solicitud de reingreso registrada con éxito.`;
       document.getElementById('botonesImpresion').style.display = 'none';
-      document.getElementById('printTitle').innerText = 'Confirmación de Solicitud de Retorno';
+      document.getElementById('printTitle').innerText = 'Confirmación de Retorno';
     }
     document.getElementById('modalPrint').style.display = 'flex';
 
@@ -640,18 +659,12 @@
   function cerrarModalImpresion() {
     document.getElementById('modalPrint').style.display = 'none';
     carritoCustodio = [];
-    if(modoActualCustodio === 'RETIRO') {
-      apiDataCustodio = { caja: null, ff: null };
-      document.getElementById('btnApi').innerText = "1. Sincronizar API Custodio";
-      document.getElementById('datosAPI').style.display = 'none';
-      document.getElementById('btnApi').style.display = 'block';
-    }
     renderTablaCustodio();
     renderCarritoCustodio();
     renderPasivas();
   }
 
-  // FICHAS PASIVAS / ARCHIVO Y TRAZABILIDAD
+  // PASIVAS
   function renderPasivas() {
     const body = document.getElementById('bodyPasivas');
     const u    = document.getElementById('pUbic').value;
@@ -659,7 +672,7 @@
     const b    = document.getElementById('pBusca').value.toLowerCase();
 
     const filtradas = masterData.filter(p =>
-      (currentAdminMode === 'TODOS' || p.it === currentAdminMode) && // Restricción Permiso IT
+      (currentAdminMode === 'TODOS' || p.it === currentAdminMode) && 
       (u   === 'TODAS'  || p.u === u) &&
       (est === 'TODOS'  || p.e === est) &&
       (b   === ''       || p.f.includes(b) || p.r.includes(b) || p.p.toLowerCase().includes(b))
@@ -682,47 +695,53 @@
     }).join('') : '<tr><td colspan="8" style="text-align:center; padding:20px">No se encontraron registros.</td></tr>';
   }
 
-  // CUMPLIMIENTO KPI
+  // CUMPLIMIENTO KPI ACTUALIZADO
   function calcularKPI() { renderCumplimiento(); }
   function renderCumplimiento() {
     const tbody = document.getElementById('bodyCumplimiento');
     const estactivos = [...new Set(solicitudes.map(s => s.profesional))];
-    if(estactivos.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">Sin datos.</td></tr>'; return; }
+    if(estactivos.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin datos.</td></tr>'; return; }
+    
+    const itFiltroGlobal = document.getElementById('cIT').value;
+
     tbody.innerHTML = estactivos.map(e => {
-      // Filtrar por instituto seleccionado
-      const itCumplimiento = document.getElementById('cIT').value;
-      const solTotales = solicitudes.filter(s => s.profesional === e && (itCumplimiento === 'TODOS' || s.it === itCumplimiento));
+      const solTotales = solicitudes.filter(s => s.profesional === e && (itFiltroGlobal === 'TODOS' || s.it === itFiltroGlobal));
       if (solTotales.length === 0) return '';
+      
       const sol = solTotales.length;
       const dig = solTotales.filter(s => s.estado === 'DIGITALIZADA').length;
-      return `<tr><td><b>${e}</b></td><td>${sol}</td><td>${dig}</td><td style="color:var(--tel-red); font-weight:bold">${((dig/sol)*100).toFixed(1)}%</td></tr>`;
+      // Obtener el IT (si es filtrado muestra el código, si no muestra "Varios")
+      const itDisplay = itFiltroGlobal === 'TODOS' ? 'VARIOS' : itFiltroGlobal;
+
+      return `<tr>
+                <td>${itDisplay}</td>
+                <td><b>${e}</b></td>
+                <td>${sol}</td>
+                <td>${dig}</td>
+                <td style="color:var(--tel-red); font-weight:bold">${((dig/sol)*100).toFixed(1)}%</td>
+              </tr>`;
     }).join('');
   }
 
-  // MODAL DIGITALIZAR
+  // DIGITALIZAR
   function abrirModalDigitalizar() {
     if (!selectedId) return alert("Seleccione una solicitud.");
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('mcFecha').value = hoy;
-    document.getElementById('mcTipoInput').value = 'Soporte Físico Documental';
-    document.getElementById('mcFileName').textContent = 'Ningún archivo seleccionado';
-    document.getElementById('mcFileInput').value = '';
     document.getElementById('modalDigitalizar').style.display = 'flex';
   }
 
   function cerrarModalDigitalizar() {
     document.getElementById('modalDigitalizar').style.display = 'none';
-    cerrarDropdown();
   }
 
   function mcArchivoSeleccionado() {
     const f = document.getElementById('mcFileInput').files[0];
-    document.getElementById('mcFileName').textContent = f ? f.name : 'Ningún archivo seleccionado';
     if (f) {
       const item = solicitudes.find(x => x.id === selectedId);
       if (item) {
         item.estado = 'DIGITALIZADA';
-        registrarMovimiento(item.ficha, 'Documento Digitalizado', 'Registro en Repositorio HCD');
+        registrarMovimiento(item.ficha, 'Documento Digitalizado', 'Repositorio HCD');
       }
       cerrarModalDigitalizar();
       selectedId = null;
@@ -730,25 +749,11 @@
     }
   }
 
-  // UTILIDADES
-  function filtrarTipo() {
-    const val = document.getElementById('mcTipoInput').value.toLowerCase();
-    document.querySelectorAll('.mc-opt').forEach(opt => {
-      opt.style.display = opt.textContent.toLowerCase().includes(val) ? 'block' : 'none';
-    });
-    document.getElementById('mcTipoDropdown').style.display = 'block';
-  }
-  function abrirDropdown()  { document.getElementById('mcTipoDropdown').style.display = 'block'; }
-  function cerrarDropdown() { document.getElementById('mcTipoDropdown').style.display = 'none'; }
-  function toggleDropdown() {
-    const dd = document.getElementById('mcTipoDropdown');
-    dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
-  }
-  function seleccionarTipo(val) { document.getElementById('mcTipoInput').value = val; cerrarDropdown(); }
-  function limpiarTipo()        { document.getElementById('mcTipoInput').value = ''; cerrarDropdown(); }
+  // UTILIDADES GENERALES
   function cerrarModal(id)      { document.getElementById(id).style.display = 'none'; }
-
-  document.addEventListener('click', e => { if (!e.target.closest('#mcTipoWrap')) cerrarDropdown(); });
+  function seleccionarTipo(val) { document.getElementById('mcTipoInput').value = val; document.getElementById('mcTipoDropdown').style.display = 'none'; }
+  function abrirDropdown()      { document.getElementById('mcTipoDropdown').style.display = 'block'; }
+  function toggleDropdown()     { const dd = document.getElementById('mcTipoDropdown'); dd.style.display = dd.style.display === 'block' ? 'none' : 'block'; }
 
   window.onload = () => { renderTablas(); renderPasivas(); renderTablaCustodio(); };
 </script>
