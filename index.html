@@ -116,6 +116,40 @@
     .modal-carga-footer { padding: 14px 24px; }
     .mc-btn-cerrar { padding: 7px 18px; border: 1px solid #ced4da; border-radius: 4px; background: white; font-size: 13px; color: #212529; cursor: pointer; font-weight: 500; }
     .mc-btn-cerrar:hover { background: #f1f3f5; }
+
+    /* ===== ACCIONES CUSTODIO (estilo imagen) ===== */
+    .acciones-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; background: #fff; margin-bottom: 18px; }
+    .acciones-box .acc-title { font-size: 12px; font-weight: 700; color: #444; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; border-bottom: 2px solid #2ecc71; padding-bottom: 8px; }
+    .acciones-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .btn-accion { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 14px; border: none; border-radius: 5px; color: white; font-weight: 700; font-size: 12px; cursor: pointer; text-transform: none; transition: 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .btn-accion:hover { transform: translateY(-1px); opacity: 0.92; }
+    .btn-accion.envio       { background: #28a745; }
+    .btn-accion.retiro      { background: #1e60d8; }
+    .btn-accion.scanner     { background: #6c757d; }
+    .btn-accion.destruccion { background: #dc3545; }
+    .grid-custodio-3 { display: grid; grid-template-columns: 220px 1fr 360px; gap: 20px; }
+    @media (max-width: 1100px){ .grid-custodio-3 { grid-template-columns: 1fr; } }
+
+    /* ===== ESTADOS DE FICHA ===== */
+    .estado-badge { padding: 3px 9px; border-radius: 12px; font-size: 10px; font-weight: 700; display: inline-block; }
+    .est-activa       { background: #d4edda; color: #155724; }
+    .est-digital      { background: #cce5ff; color: #004085; }
+    .est-custodio     { background: #fff3cd; color: #856404; }
+    .est-scanner      { background: #e2d9f3; color: #4b2a87; }
+    .est-destruida    { background: #f8d7da; color: #721c24; }
+    .est-retiro       { background: #ffe5d0; color: #8a4b00; }
+
+    .section-cumpl { margin-top: 30px; border-top: 2px dashed #e0e0e0; padding-top: 20px; }
+    .estado-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 10px; margin-bottom: 18px; }
+    .estado-card { background: #fff; border: 1px solid #e9ecef; border-left: 4px solid var(--tel-red); border-radius: 6px; padding: 12px; }
+    .estado-card .ec-num { font-size: 22px; font-weight: 800; color: #212529; }
+    .estado-card .ec-lbl { font-size: 10px; text-transform: uppercase; color: #6c757d; font-weight: 700; letter-spacing: 0.3px; }
+    .ec-digital   { border-left-color: #007bff; }
+    .ec-custodio  { border-left-color: #f0ad4e; }
+    .ec-scanner   { border-left-color: #6f42c1; }
+    .ec-destruida { border-left-color: #dc3545; }
+    .ec-activa    { border-left-color: #28a745; }
+    .ec-retiro    { border-left-color: #fd7e14; }
   </style>
 </head>
 <body>
@@ -209,11 +243,18 @@
 
     <div id="adm-custodio" class="panel">
       <h2>Gestión de Custodio Externo <small style="font-size: 11px; color: #666; float: right;">Operador: Archive Express S.A.</small></h2>
-      <div class="nav-op">
-        <button class="nav-btn active" id="btnModoRetiro" onclick="setModo('RETIRO', this)">SOLICITAR ENVÍO (Retiro IT)</button>
-        <button class="nav-btn" id="btnModoReintegro" onclick="setModo('REINTEGRO', this)">SOLICITAR RETORNO (Reintegro IT)</button>
-      </div>
-      <div class="grid-custodio">
+      <div class="grid-custodio-3">
+        <div>
+          <div class="acciones-box">
+            <div class="acc-title">☰ ACCIONES</div>
+            <div class="acciones-grid">
+              <button class="btn-accion envio"       id="btnAccEnvio"       onclick="setModo('RETIRO', this)">🛒 Solicitar Envío</button>
+              <button class="btn-accion retiro"      id="btnAccRetiro"      onclick="setModo('REINTEGRO', this)">🚚 Solicitar Retiro</button>
+              <button class="btn-accion scanner"     id="btnAccScanner"     onclick="setModo('SCANNER', this)">🖨 Solicitar Scanner</button>
+              <button class="btn-accion destruccion" id="btnAccDestruccion" onclick="setModo('DESTRUCCION', this)">🗑 Solicitar Destrucción</button>
+            </div>
+          </div>
+        </div>
         <div class="panel-left-cus">
           <div id="tituloInventario" style="font-weight: bold; margin-bottom: 10px; color: #444; font-size: 12px;">Fichas en Instituto (Listas para despacho)</div>
           <div class="filter-bar" style="grid-template-columns: 1fr;">
@@ -233,6 +274,10 @@
           </div>
           <div class="cart-list" id="listaSeleccion">
             <div style="text-align: center; color: #999; padding: 20px;">Sin fichas seleccionadas</div>
+          </div>
+          <div id="motivoBox" style="display:none; margin-top:12px;">
+            <label style="font-size:10px; font-weight:800; color:#444; text-transform:uppercase; display:block; margin-bottom:4px;">Motivo / Observación</label>
+            <textarea id="motivoOperacion" rows="2" style="width:100%; padding:6px; font-size:11px; border:1px solid #ced4da; border-radius:4px;" placeholder="Indique el motivo..."></textarea>
           </div>
           <button class="btn btn-primary" id="btnFinalizar" onclick="procesarOperacion()" disabled style="width: 100%; margin-top: 15px;">Confirmar Solicitud</button>
         </div>
@@ -258,6 +303,42 @@
         </thead>
         <tbody id="bodyCumplimiento"></tbody>
       </table>
+
+      <div class="section-cumpl">
+        <h2>Estado de Fichas</h2>
+        <div class="estado-cards" id="estadoCards"></div>
+        <div class="filter-bar" style="grid-template-columns: 1fr 1fr 1fr auto;">
+          <div class="form-group"><label>Filtrar por Estado</label>
+            <select id="filtroEstadoFicha" onchange="renderEstadoFichas()">
+              <option value="TODOS">TODOS LOS ESTADOS</option>
+              <option value="ACTIVA">FICHA ACTIVA</option>
+              <option value="DIGITALIZADA">FICHA DIGITALIZADA</option>
+              <option value="EN_CUSTODIO">FICHA EN CUSTODIO</option>
+              <option value="EN_SCANNER">FICHA EN SCANNER</option>
+              <option value="EN_RETIRO">FICHA EN RETIRO</option>
+              <option value="DESTRUIDA">FICHA DESTRUIDA</option>
+            </select>
+          </div>
+          <div class="form-group"><label>N° Ficha / Paciente</label>
+            <input type="text" id="filtroEstadoBusca" placeholder="Buscar..." onkeyup="renderEstadoFichas()">
+          </div>
+          <div></div>
+          <button class="btn btn-excel" onclick="exportarEstadosExcel()">Exportar Excel</button>
+        </div>
+        <table id="tablaEstadoFichas">
+          <thead>
+            <tr>
+              <th>N° Ficha</th>
+              <th>IT</th>
+              <th>Paciente</th>
+              <th>Ubicación</th>
+              <th>Estado de Ficha</th>
+              <th>Última Actualización</th>
+            </tr>
+          </thead>
+          <tbody id="bodyEstadoFichas"></tbody>
+        </table>
+      </div>
     </div>
 
     <div id="adm-pasivas" class="panel">
@@ -371,21 +452,21 @@
   };
 
   let masterData = [
-    { f: '1001',   r: '12.345.678-9', p: 'Carlos Araya',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131' },
-    { f: '1002',   r: '15.667.889-0', p: 'Ana Zúñiga',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131' },
-    { f: '102060', r: '11.443.221-0', p: 'Roberto Tapia',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '132' },
-    { f: '104001', r: '10.111.222-3', p: 'Sofía Herrera',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '133' },
-    { f: '104002', r: '14.222.333-4', p: 'Diego Contreras',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131' },
-    { f: '101020', r: '12.334.445-1', p: 'Cesar Jiménez',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131' },
-    { f: '102030', r: '15.223.112-K', p: 'Marta Rivas',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '132' },
-    { f: '103013', r: '13.445.998-9', p: 'Beatriz Peña',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131' },
-    { f: '104010', r: '16.543.210-8', p: 'Valentina Soto',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131' },
-    { f: '104011', r: '19.876.543-2', p: 'Patricio Muñoz',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '134' },
-    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',        u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8801',  e: 'PASIVO', it: '131' },
-    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8802',  e: 'PASIVO', it: '131' },
-    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9010',  e: 'PASIVO', it: '132' },
-    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9011',  e: 'PASIVO', it: '132' },
-    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9200',  e: 'PASIVO', it: '131' }
+    { f: '1001',   r: '12.345.678-9', p: 'Carlos Araya',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', ef: 'ACTIVA',       ult: '01/04/2026' },
+    { f: '1002',   r: '15.667.889-0', p: 'Ana Zúñiga',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', ef: 'ACTIVA',       ult: '02/04/2026' },
+    { f: '102060', r: '11.443.221-0', p: 'Roberto Tapia',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '132', ef: 'ACTIVA',       ult: '03/04/2026' },
+    { f: '104001', r: '10.111.222-3', p: 'Sofía Herrera',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '133', ef: 'DIGITALIZADA', ult: '15/03/2026' },
+    { f: '104002', r: '14.222.333-4', p: 'Diego Contreras',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', ef: 'ACTIVA',       ult: '04/04/2026' },
+    { f: '101020', r: '12.334.445-1', p: 'Cesar Jiménez',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'ACTIVA',       ult: '12/02/2026' },
+    { f: '102030', r: '15.223.112-K', p: 'Marta Rivas',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '132', ef: 'DIGITALIZADA', ult: '20/01/2026' },
+    { f: '103013', r: '13.445.998-9', p: 'Beatriz Peña',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'ACTIVA',       ult: '01/03/2026' },
+    { f: '104010', r: '16.543.210-8', p: 'Valentina Soto',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'DESTRUIDA',    ult: '10/12/2025' },
+    { f: '104011', r: '19.876.543-2', p: 'Patricio Muñoz',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '134', ef: 'ACTIVA',       ult: '15/03/2026' },
+    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',        u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8801',  e: 'PASIVO', it: '131', ef: 'EN_CUSTODIO',  ult: '12/10/2023' },
+    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8802',  e: 'PASIVO', it: '131', ef: 'EN_CUSTODIO',  ult: '12/10/2023' },
+    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9010',  e: 'PASIVO', it: '132', ef: 'EN_CUSTODIO',  ult: '28/09/2023' },
+    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9011',  e: 'PASIVO', it: '132', ef: 'EN_CUSTODIO',  ult: '28/09/2023' },
+    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9200',  e: 'PASIVO', it: '131', ef: 'EN_CUSTODIO',  ult: '05/06/2024' }
   ];
 
   const dbTrazabilidad = {
@@ -555,24 +636,41 @@
     modoActualCustodio = modo;
     carritoCustodio = [];
     apiDataCustodio = { caja: null, ff: null };
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panelConfig').className = 'panel-right-cus mode-' + modo;
-    document.getElementById('tituloInventario').innerText = (modo === 'RETIRO') ? 'Fichas en Instituto (Listas para despacho)' : 'Fichas en Custodio (Para Reintegro)';
-    document.getElementById('cartTitle').innerText = (modo === 'RETIRO') ? 'PREPARAR ENVÍO' : 'SOLICITAR RETORNO AL IT';
-    document.getElementById('btnApi').style.display = (modo === 'RETIRO') ? 'block' : 'none';
+    document.querySelectorAll('.btn-accion').forEach(b => b.style.outline = 'none');
+    if (btn) btn.style.outline = '3px solid #212529';
+    const cfg = {
+      'RETIRO':      { titInv: 'Fichas en Instituto (Listas para despacho)', cart: 'PREPARAR ENVÍO',          api: true,  motivo: false },
+      'REINTEGRO':   { titInv: 'Fichas en Custodio (Para Reintegro)',         cart: 'SOLICITAR RETORNO AL IT', api: false, motivo: false },
+      'SCANNER':     { titInv: 'Fichas disponibles para Digitalización',      cart: 'SOLICITAR DIGITALIZACIÓN',api: false, motivo: true  },
+      'DESTRUCCION': { titInv: 'Fichas Pasivas elegibles para Destrucción',   cart: 'SOLICITAR DESTRUCCIÓN',   api: false, motivo: true  }
+    }[modo];
+    document.getElementById('panelConfig').className = 'panel-right-cus mode-' + (modo === 'RETIRO' ? 'RETIRO' : 'REINTEGRO');
+    document.getElementById('tituloInventario').innerText = cfg.titInv;
+    document.getElementById('cartTitle').innerText = cfg.cart;
+    document.getElementById('btnApi').style.display = cfg.api ? 'block' : 'none';
     document.getElementById('datosAPI').style.display = 'none';
+    document.getElementById('motivoBox').style.display = cfg.motivo ? 'block' : 'none';
+    const mo = document.getElementById('motivoOperacion'); if (mo) mo.value = '';
+    const btnFin = document.getElementById('btnFinalizar');
+    btnFin.innerText = (modo === 'DESTRUCCION') ? 'Confirmar Destrucción' :
+                       (modo === 'SCANNER')     ? 'Confirmar Envío a Scanner' :
+                       (modo === 'REINTEGRO')   ? 'Confirmar Retorno' : 'Confirmar Solicitud';
     renderTablaCustodio();
     renderCarritoCustodio();
   }
 
   function renderTablaCustodio() {
     const busqueda = document.getElementById('busquedaGlobal').value.toLowerCase();
-    const filtradas = masterData.filter(d =>
-      (currentAdminMode === 'TODOS' || d.it === currentAdminMode) && 
-      (d.f.includes(busqueda) || d.p.toLowerCase().includes(busqueda)) &&
-      (modoActualCustodio === 'RETIRO' ? (d.u === 'INSTITUTO' && d.e === 'PASIVO') : d.u === 'CUSTODIO')
-    );
+    const filtradas = masterData.filter(d => {
+      if (!(currentAdminMode === 'TODOS' || d.it === currentAdminMode)) return false;
+      if (!(d.f.includes(busqueda) || d.p.toLowerCase().includes(busqueda))) return false;
+      if (d.ef === 'DESTRUIDA') return false;
+      if (modoActualCustodio === 'RETIRO')      return d.u === 'INSTITUTO' && d.e === 'PASIVO';
+      if (modoActualCustodio === 'REINTEGRO')   return d.u === 'CUSTODIO';
+      if (modoActualCustodio === 'SCANNER')     return d.ef !== 'DIGITALIZADA' && d.ef !== 'EN_SCANNER';
+      if (modoActualCustodio === 'DESTRUCCION') return d.e === 'PASIVO' && d.ef !== 'EN_SCANNER';
+      return true;
+    });
     document.getElementById('tablaPrincipalCustodio').innerHTML = filtradas.map(d => `
       <tr>
         <td><b>${d.f}</b> <span style="font-size:9px;color:#888">(IT ${d.it})</span></td><td>${d.p}</td>
@@ -583,7 +681,7 @@
           <button class="btn btn-secondary" style="font-size:9px; padding:4px; width:100%" onclick="verTrazabilidad('${d.f}')">Historial</button>
         </td>
       </tr>
-    `).join('');
+    `).join('') || '<tr><td colspan="5" style="text-align:center; padding:20px; color:#888;">No hay fichas para esta acción.</td></tr>';
   }
 
   function conectarAPI() {
@@ -617,16 +715,35 @@
       div.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">Sin fichas seleccionadas</div>';
       return;
     }
-    div.innerHTML = carritoCustodio.map((item, idx) => `
+    div.innerHTML = carritoCustodio.map((item, idx) => {
+      let extra = '';
+      if (modoActualCustodio === 'RETIRO')      extra = '<span class="badge-file">'+item.tempFF+'</span>';
+      else if (modoActualCustodio === 'REINTEGRO') extra = '<small>Caja:'+item.c+'</small>';
+      else if (modoActualCustodio === 'SCANNER')   extra = '<span class="estado-badge est-scanner">SCANNER</span>';
+      else if (modoActualCustodio === 'DESTRUCCION') extra = '<span class="estado-badge est-destruida">DESTRUIR</span>';
+      return `
       <div class="cart-item">
         <div style="font-size:11px"><b>${item.f}</b><br>${item.p}</div>
-        <div>${modoActualCustodio==='RETIRO' ? '<span class="badge-file">'+item.tempFF+'</span>' : '<small>Caja:'+item.c+'</small>'}</div>
+        <div>${extra}</div>
         <button onclick="removerCus(${idx})" style="border:none; color:red; background:none; cursor:pointer">×</button>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
+  }
+
+  function removerCus(idx) {
+    carritoCustodio.splice(idx, 1);
+    renderCarritoCustodio();
   }
 
   function procesarOperacion() {
+    const motivo = (document.getElementById('motivoOperacion')?.value || '').trim();
+    if ((modoActualCustodio === 'SCANNER' || modoActualCustodio === 'DESTRUCCION') && !motivo) {
+      return alert('Debe indicar el motivo / observación.');
+    }
+    if (modoActualCustodio === 'DESTRUCCION') {
+      if (!confirm(`¿Confirma la DESTRUCCIÓN de ${carritoCustodio.length} ficha(s)? Esta acción es irreversible.`)) return;
+    }
+    const hoy = new Date().toLocaleDateString('es-CL');
     if (modoActualCustodio === 'RETIRO') {
       const caja = apiDataCustodio.caja;
       document.getElementById('lblCajaLabel').innerText = "ID CAJA";
@@ -634,26 +751,49 @@
       document.getElementById('msgConfirmacion').innerText = `Se han asignado ${carritoCustodio.length} fichas a la caja ${caja}.`;
       document.getElementById('botonesImpresion').style.display = 'grid';
       document.getElementById('printTitle').innerText = 'Documentos de Despacho';
-    } else {
+    } else if (modoActualCustodio === 'REINTEGRO') {
       const ticket = "REQ-" + Math.floor(Math.random()*90000 + 10000);
       document.getElementById('lblCajaLabel').innerText = "SEGUIMIENTO";
       document.getElementById('lblCajaID').innerText = ticket;
       document.getElementById('msgConfirmacion').innerText = `Solicitud de reingreso registrada con éxito.`;
       document.getElementById('botonesImpresion').style.display = 'none';
       document.getElementById('printTitle').innerText = 'Confirmación de Retorno';
+    } else if (modoActualCustodio === 'SCANNER') {
+      const ticket = "SCN-" + Math.floor(Math.random()*90000 + 10000);
+      document.getElementById('lblCajaLabel').innerText = "TICKET SCANNER";
+      document.getElementById('lblCajaID').innerText = ticket;
+      document.getElementById('msgConfirmacion').innerText = `${carritoCustodio.length} ficha(s) enviada(s) a digitalización.`;
+      document.getElementById('botonesImpresion').style.display = 'none';
+      document.getElementById('printTitle').innerText = 'Confirmación de Solicitud de Scanner';
+    } else if (modoActualCustodio === 'DESTRUCCION') {
+      const ticket = "DES-" + Math.floor(Math.random()*90000 + 10000);
+      document.getElementById('lblCajaLabel').innerText = "ACTA DESTRUCCIÓN";
+      document.getElementById('lblCajaID').innerText = ticket;
+      document.getElementById('msgConfirmacion').innerText = `${carritoCustodio.length} ficha(s) marcada(s) como destruida(s).`;
+      document.getElementById('botonesImpresion').style.display = 'none';
+      document.getElementById('printTitle').innerText = 'Acta de Destrucción de Fichas';
     }
     document.getElementById('modalPrint').style.display = 'flex';
 
     carritoCustodio.forEach(c => {
       let real = masterData.find(m => m.f === c.f);
+      if (!real) return;
+      real.ult = hoy;
       if (modoActualCustodio === 'RETIRO') {
-        real.u = 'CUSTODIO'; real.c = apiDataCustodio.caja; real.ff = c.tempFF;
+        real.u = 'CUSTODIO'; real.c = apiDataCustodio.caja; real.ff = c.tempFF; real.ef = 'EN_CUSTODIO';
         registrarMovimiento(real.f, 'Despacho a Custodio', 'Instituto -> Custodio');
-      } else {
-        real.u = 'INSTITUTO'; real.c = 'N/A'; real.ff = 'N/A';
+      } else if (modoActualCustodio === 'REINTEGRO') {
+        real.u = 'INSTITUTO'; real.c = 'N/A'; real.ff = 'N/A'; real.ef = 'ACTIVA';
         registrarMovimiento(real.f, 'Retorno de Custodio', 'Custodio -> Instituto');
+      } else if (modoActualCustodio === 'SCANNER') {
+        real.ef = 'EN_SCANNER';
+        registrarMovimiento(real.f, 'Solicitud de Scanner ('+motivo+')', (real.u==='CUSTODIO'?'Custodio':'Instituto')+' -> Scanner');
+      } else if (modoActualCustodio === 'DESTRUCCION') {
+        real.ef = 'DESTRUIDA';
+        registrarMovimiento(real.f, 'Destrucción de Ficha ('+motivo+')', 'Baja definitiva');
       }
     });
+    renderEstadoFichas();
   }
 
   function cerrarModalImpresion() {
@@ -662,6 +802,7 @@
     renderTablaCustodio();
     renderCarritoCustodio();
     renderPasivas();
+    renderEstadoFichas();
   }
 
   // PASIVAS
@@ -721,6 +862,77 @@
                 <td style="color:var(--tel-red); font-weight:bold">${((dig/sol)*100).toFixed(1)}%</td>
               </tr>`;
     }).join('');
+    renderEstadoFichas();
+  }
+
+  // ===== ESTADO DE FICHAS (Cumplimiento) =====
+  const ESTADO_META = {
+    'ACTIVA':       { lbl: 'Ficha Activa',       cls: 'est-activa',    card: 'ec-activa' },
+    'DIGITALIZADA': { lbl: 'Ficha Digitalizada', cls: 'est-digital',   card: 'ec-digital' },
+    'EN_CUSTODIO':  { lbl: 'En Custodio',        cls: 'est-custodio',  card: 'ec-custodio' },
+    'EN_SCANNER':   { lbl: 'En Scanner',         cls: 'est-scanner',   card: 'ec-scanner' },
+    'EN_RETIRO':    { lbl: 'En Retiro',          cls: 'est-retiro',    card: 'ec-retiro' },
+    'DESTRUIDA':    { lbl: 'Ficha Destruida',    cls: 'est-destruida', card: 'ec-destruida' }
+  };
+
+  function renderEstadoFichas() {
+    const itFiltro = document.getElementById('cIT')?.value || 'TODOS';
+    const filtroEstado = document.getElementById('filtroEstadoFicha')?.value || 'TODOS';
+    const busca = (document.getElementById('filtroEstadoBusca')?.value || '').toLowerCase();
+
+    const base = masterData.filter(d =>
+      (currentAdminMode === 'TODOS' || d.it === currentAdminMode) &&
+      (itFiltro === 'TODOS' || d.it === itFiltro)
+    );
+
+    // Tarjetas resumen
+    const cardsDiv = document.getElementById('estadoCards');
+    if (cardsDiv) {
+      cardsDiv.innerHTML = Object.keys(ESTADO_META).map(k => {
+        const n = base.filter(d => (d.ef || 'ACTIVA') === k).length;
+        const m = ESTADO_META[k];
+        return `<div class="estado-card ${m.card}"><div class="ec-num">${n}</div><div class="ec-lbl">${m.lbl}</div></div>`;
+      }).join('');
+    }
+
+    // Tabla detalle
+    const tbody = document.getElementById('bodyEstadoFichas');
+    if (!tbody) return;
+    const lista = base.filter(d => {
+      const ef = d.ef || 'ACTIVA';
+      if (filtroEstado !== 'TODOS' && ef !== filtroEstado) return false;
+      if (busca && !(d.f.includes(busca) || d.p.toLowerCase().includes(busca))) return false;
+      return true;
+    });
+    tbody.innerHTML = lista.length ? lista.map(d => {
+      const ef = d.ef || 'ACTIVA';
+      const m = ESTADO_META[ef] || ESTADO_META['ACTIVA'];
+      const ub = d.u === 'INSTITUTO' ? 'IT ' + d.it : 'CUSTODIO';
+      return `<tr>
+        <td><b>${d.f}</b></td>
+        <td>${d.it}</td>
+        <td>${d.p}</td>
+        <td>${ub}</td>
+        <td><span class="estado-badge ${m.cls}">${m.lbl}</span></td>
+        <td style="font-size:11px; color:#555">${d.ult || '—'}</td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="6" style="text-align:center; padding:20px; color:#888;">Sin fichas para los filtros seleccionados.</td></tr>';
+  }
+
+  function exportarEstadosExcel() {
+    const filas = [['N° Ficha','IT','Paciente','Ubicación','Estado','Última Actualización']];
+    masterData.forEach(d => {
+      if (currentAdminMode !== 'TODOS' && d.it !== currentAdminMode) return;
+      const ef = d.ef || 'ACTIVA';
+      const m = ESTADO_META[ef] || ESTADO_META['ACTIVA'];
+      filas.push([d.f, d.it, d.p, (d.u==='INSTITUTO'?'IT '+d.it:'CUSTODIO'), m.lbl, d.ult || '']);
+    });
+    const csv = filas.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'estado_fichas.csv'; a.click();
+    URL.revokeObjectURL(url);
   }
 
   // DIGITALIZAR
@@ -755,7 +967,28 @@
   function abrirDropdown()      { document.getElementById('mcTipoDropdown').style.display = 'block'; }
   function toggleDropdown()     { const dd = document.getElementById('mcTipoDropdown'); dd.style.display = dd.style.display === 'block' ? 'none' : 'block'; }
 
-  window.onload = () => { renderTablas(); renderPasivas(); renderTablaCustodio(); };
+  function exportarExcel() {
+    const filas = [['Instituto','Profesional','Total Solicitadas','Total Digitalizadas','% Cumplimiento']];
+    document.querySelectorAll('#tablaCumplimiento tbody tr').forEach(tr => {
+      const cells = [...tr.children].map(td => td.innerText.trim());
+      if (cells.length) filas.push(cells);
+    });
+    const csv = filas.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'cumplimiento.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  window.onload = () => {
+    renderTablas();
+    renderPasivas();
+    renderTablaCustodio();
+    renderEstadoFichas();
+    const b = document.getElementById('btnAccEnvio');
+    if (b) b.style.outline = '3px solid #212529';
+  };
 </script>
 </body>
 </html>
