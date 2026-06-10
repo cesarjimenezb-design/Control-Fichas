@@ -213,9 +213,10 @@
   <div id="view-admin" style="display:none;">
     <nav>
       <button class="tab-btn active" onclick="switchTab('admin', 'adm-bandeja', this)">Bandeja Digitalización</button>
-      <button class="tab-btn" onclick="switchTab('admin', 'adm-custodio', this)">Movimiento Ficha Externo</button>
+      <button class="tab-btn" onclick="switchTab('admin', 'adm-custodio', this)">Gestión SFD Físico</button>
       <button class="tab-btn" onclick="switchTab('admin', 'adm-cumplimiento', this)">Nivel Cumplimiento</button>
       <button class="tab-btn" onclick="switchTab('admin', 'adm-pasivas', this)">Fichas Pasivas / Archivo</button>
+      <button class="tab-btn" onclick="switchTab('admin', 'adm-auditoria', this)">&#128274; Auditoría</button>
     </nav>
 
     <div id="adm-bandeja" class="panel active">
@@ -242,16 +243,17 @@
     </div>
 
     <div id="adm-custodio" class="panel">
-      <h2>Gestión de Custodio Externo <small style="font-size: 11px; color: #666; float: right;">Operador: Archive Express S.A.</small></h2>
+      <h2>Gestión SFD Físico <small style="font-size: 11px; color: #888; float: right; font-style: italic;">⚠ Envíos físicos inter-IT y a custodio externo suspendidos desde 15/06/2026</small></h2>
       <div class="grid-custodio-3">
         <div>
           <div class="acciones-box">
-            <div class="acc-title">☰ ACCIONES</div>
+            <div class="acc-title">☰ ACCIONES DISPONIBLES</div>
+            <div style="font-size:10px; color:#856404; background:#fff3cd; border:1px solid #f1e4b8; border-radius:4px; padding:8px 10px; margin-bottom:12px;">
+              🚫 <b>Envío a custodio externo y traslado inter-IT suspendidos</b> por Normativa Primera Etapa (15/06/2026)
+            </div>
             <div class="acciones-grid">
-              <button class="btn-accion envio"       id="btnAccEnvio"       onclick="setModo('RETIRO', this)">🛒 Solicitar Envío</button>
-              <button class="btn-accion retiro"      id="btnAccRetiro"      onclick="setModo('REINTEGRO', this)">🚚 Solicitar Retiro</button>
-              <button class="btn-accion scanner"     id="btnAccScanner"     onclick="setModo('SCANNER', this)">🖨 Solicitar Scanner</button>
-              <button class="btn-accion destruccion" id="btnAccDestruccion" onclick="setModo('DESTRUCCION', this)">🗑 Solicitar Destrucción</button>
+              <button class="btn-accion scanner"     id="btnAccScanner"     onclick="setModo('SCANNER', this)">🖨 Solicitar Scanner / Digitalización</button>
+              <button class="btn-accion destruccion" id="btnAccDestruccion" onclick="setModo('DESTRUCCION', this)">🗑 Solicitar Baja Documental con Acta</button>
             </div>
           </div>
         </div>
@@ -279,7 +281,44 @@
             <label style="font-size:10px; font-weight:800; color:#444; text-transform:uppercase; display:block; margin-bottom:4px;">Motivo / Observación</label>
             <textarea id="motivoOperacion" rows="2" style="width:100%; padding:6px; font-size:11px; border:1px solid #ced4da; border-radius:4px;" placeholder="Indique el motivo..."></textarea>
           </div>
-          <button class="btn btn-primary" id="btnFinalizar" onclick="procesarOperacion()" disabled style="width: 100%; margin-top: 15px;">Confirmar Solicitud</button>
+          <!-- Modal Subir Acta + Confirmar Baja -->
+          <div id="modalSubirActa" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9998; align-items:center; justify-content:center;">
+            <div style="background:#fff; width:90%; max-width:520px; border-radius:6px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+              <div style="background:var(--tel-red); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                <strong style="font-size:13px; text-transform:uppercase;">📄 Adjuntar Acta de Autorización de Baja</strong>
+                <button onclick="cerrarModalSubirActa()" style="background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer; font-weight:bold;">×</button>
+              </div>
+              <div style="padding:16px;">
+                <div style="font-size:11px; color:#555; margin-bottom:10px;">Fichas a dar de baja: <b id="contFichasBaja">0</b></div>
+                <label style="font-size:10px; font-weight:800; color:var(--tel-red-dark); text-transform:uppercase; display:block; margin-bottom:6px;">Acta de Autorización (PDF, JPG, PNG · máx 10MB)</label>
+                <input type="file" id="inputActaDestruccion" accept=".pdf,.jpg,.jpeg,.png" onchange="onSeleccionActa(this)" style="width:100%; font-size:11px; padding:6px; border:1px dashed var(--tel-red); border-radius:4px; background:rgba(220,53,69,0.05);">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px;">
+                  <div id="nombreActaDestruccion" style="font-size:10px; color:#888;">Ningún archivo adjunto</div>
+                  <button type="button" id="btnVerActa" onclick="abrirModalActa()" style="display:none; font-size:10px; font-weight:700; padding:4px 10px; background:var(--tel-red); color:#fff; border:none; border-radius:3px; cursor:pointer;">👁 Ver Acta</button>
+                </div>
+                <div id="msgActaError" style="font-size:10px; color:var(--tel-red-dark); margin-top:6px; min-height:14px;"></div>
+              </div>
+              <div style="padding:10px 16px; background:#f5f5f5; border-top:1px solid #ddd; display:flex; justify-content:space-between; gap:8px;">
+                <button onclick="cerrarModalSubirActa()" style="padding:8px 14px; font-size:11px; font-weight:700; background:#6c757d; color:#fff; border:none; border-radius:3px; cursor:pointer;">Cancelar</button>
+                <button id="btnConfirmarBajaModal" onclick="confirmarBajaConActa()" disabled style="padding:8px 14px; font-size:11px; font-weight:700; background:var(--tel-red); color:#fff; border:none; border-radius:3px; cursor:not-allowed; opacity:0.55;">Confirmar Baja Documental</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Preview Acta -->
+          <div id="modalActa" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+            <div style="background:#fff; width:90%; max-width:800px; height:85vh; border-radius:6px; display:flex; flex-direction:column; overflow:hidden;">
+              <div style="background:var(--tel-red); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                <strong style="font-size:13px; text-transform:uppercase;">📄 Acta de Autorización de Baja</strong>
+                <button onclick="cerrarModalActa()" style="background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer; font-weight:bold;">×</button>
+              </div>
+              <div id="modalActaBody" style="flex:1; overflow:auto; background:#eee; display:flex; align-items:center; justify-content:center; padding:10px;"></div>
+              <div style="padding:10px 16px; background:#f5f5f5; border-top:1px solid #ddd; text-align:right;">
+                <button onclick="cerrarModalActa()" style="padding:6px 14px; font-size:11px; font-weight:700; background:#6c757d; color:#fff; border:none; border-radius:3px; cursor:pointer;">Cerrar</button>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btnFinalizar" onclick="iniciarConfirmacion()" disabled style="width: 100%; margin-top: 15px;">Confirmar Solicitud</button>
         </div>
       </div>
     </div>
@@ -313,9 +352,7 @@
               <option value="TODOS">TODOS LOS ESTADOS</option>
               <option value="ACTIVA">FICHA ACTIVA</option>
               <option value="DIGITALIZADA">FICHA DIGITALIZADA</option>
-              <option value="EN_CUSTODIO">FICHA EN CUSTODIO</option>
               <option value="EN_SCANNER">FICHA EN SCANNER</option>
-              <option value="EN_RETIRO">FICHA EN RETIRO</option>
               <option value="DESTRUIDA">FICHA DESTRUIDA</option>
             </select>
           </div>
@@ -343,7 +380,7 @@
 
     <div id="adm-pasivas" class="panel">
       <div class="filter-bar">
-        <div class="form-group"><label>Ubicación</label><select id="pUbic"><option value="TODAS">TODAS LAS UBICACIONES</option><option value="INSTITUTO">EN INSTITUTO</option><option value="CUSTODIO">EN CUSTODIO EXTERNO</option></select></div>
+        <div class="form-group"><label>Ubicación</label><select id="pUbic"><option value="TODAS">TODAS LAS UBICACIONES</option><option value="INSTITUTO">EN INSTITUTO</option></select></div>
         <div class="form-group"><label>Estado Ficha</label><select id="pEstado"><option value="TODOS">TODOS LOS ESTADOS</option><option value="ACTIVO">ACTIVO</option><option value="PASIVO">PASIVO</option></select></div>
         <div class="form-group" style="grid-column: span 2;"><label>Criterio (Ficha, RUT o Nombre)</label><input type="text" id="pBusca" placeholder="Ingrese dato de búsqueda..."></div>
         <button class="btn btn-primary" onclick="renderPasivas()">Buscar en Archivo</button>
@@ -353,6 +390,65 @@
         <tbody id="bodyPasivas"></tbody>
       </table>
     </div>
+
+    <!-- ===== MÓDULO AUDITORÍA ===== -->
+    <div id="adm-auditoria" class="panel">
+      <h2>&#128274; Registro de Auditoría del Sistema</h2>
+      <div class="filter-bar" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+        <div class="form-group">
+          <label>Tipo de Acción</label>
+          <select id="audFiltroTipo">
+            <option value="TODOS">TODAS LAS ACCIONES</option>
+            <option value="SOLICITUD">Nueva Solicitud</option>
+            <option value="DIGITALIZACIÓN">Digitalización</option>
+            <option value="SCANNER">Envío a Scanner</option>
+            <option value="DESTRUCCIÓN">Baja Documental</option>
+            <option value="SISTEMA">Sistema / Acceso</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Instituto (IT)</label>
+          <select id="audFiltroIT">
+            <option value="TODOS">TODOS LOS IT</option>
+            <option value="131">131 - SANTIAGO</option>
+            <option value="132">132 - VALPARAÍSO</option>
+            <option value="133">133 - CONCEPCIÓN</option>
+            <option value="134">134 - ANTOFAGASTA</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Usuario / Responsable</label>
+          <input type="text" id="audFiltroUsuario" placeholder="Filtrar por usuario...">
+        </div>
+        <div class="form-group">
+          <label>N° Ficha</label>
+          <input type="text" id="audFiltroFicha" placeholder="Ej: 1005">
+        </div>
+        <button class="btn btn-primary" onclick="renderAuditoria()">Aplicar Filtros</button>
+        <button class="btn btn-excel" onclick="exportarAuditoriaCSV()">Exportar CSV</button>
+      </div>
+
+      <!-- Resumen por tipo -->
+      <div id="audResumen" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap:10px; margin-bottom:20px;"></div>
+
+      <!-- Tabla principal -->
+      <table id="tablaAuditoria" style="width:100%; border-collapse:collapse; font-size:11.5px;">
+        <thead>
+          <tr>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Fecha y Hora</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Tipo Acción</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">N° Ficha</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Paciente / Detalle</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">IT</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Usuario Responsable</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Descripción</th>
+          </tr>
+        </thead>
+        <tbody id="bodyAuditoria"></tbody>
+      </table>
+      <div id="audPaginacion" style="margin-top:12px; display:flex; gap:6px; align-items:center; font-size:12px; color:#555;"></div>
+    </div>
+    <!-- ===== FIN MÓDULO AUDITORÍA ===== -->
 
   </div>
 </main>
@@ -462,19 +558,21 @@
     { f: '103013', r: '13.445.998-9', p: 'Beatriz Peña',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'ACTIVA',       ult: '01/03/2026' },
     { f: '104010', r: '16.543.210-8', p: 'Valentina Soto',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'DESTRUIDA',    ult: '10/12/2025' },
     { f: '104011', r: '19.876.543-2', p: 'Patricio Muñoz',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '134', ef: 'ACTIVA',       ult: '15/03/2026' },
-    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',        u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8801',  e: 'PASIVO', it: '131', ef: 'EN_CUSTODIO',  ult: '12/10/2023' },
-    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'CUSTODIO',  c: 'CX-2024-001', ff: 'FF-8802',  e: 'PASIVO', it: '131', ef: 'EN_CUSTODIO',  ult: '12/10/2023' },
-    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9010',  e: 'PASIVO', it: '132', ef: 'EN_CUSTODIO',  ult: '28/09/2023' },
-    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'CUSTODIO',  c: 'CX-2024-002', ff: 'FF-9011',  e: 'PASIVO', it: '132', ef: 'EN_CUSTODIO',  ult: '28/09/2023' },
-    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'CUSTODIO',  c: 'CX-2024-003', ff: 'FF-9200',  e: 'PASIVO', it: '131', ef: 'EN_CUSTODIO',  ult: '05/06/2024' }
+    { f: '102040', r: '18.998.776-5', p: 'Luis Morales',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'ACTIVA',       ult: '03/06/2026' },
+    { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'ACTIVA',       ult: '03/06/2026' },
+    { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '132', ef: 'ACTIVA',       ult: '03/06/2026' },
+    { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '132', ef: 'ACTIVA',       ult: '03/06/2026' },
+    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'ACTIVA',       ult: '03/06/2026' }
   ];
 
   const dbTrazabilidad = {
     '102040': [
+      { fecha: '03/06/2026 09:00', accion: 'Reingreso a Instituto (Normativa 15/06/2026)', mov: 'Custodio -> Instituto', user: 'Archivo Central' },
       { fecha: '12/10/2023 14:30', accion: 'Solicitud Envío Custodio', mov: 'Instituto -> Custodio', user: 'Admin. IT 131 - SANTIAGO' },
       { fecha: '05/01/2022 09:15', accion: 'Creación Ficha Física', mov: 'Alta en Instituto', user: 'Archivo Central' }
     ],
     '102050': [
+      { fecha: '03/06/2026 09:00', accion: 'Reingreso a Instituto (Normativa 15/06/2026)', mov: 'Custodio -> Instituto', user: 'Archivo Central' },
       { fecha: '28/09/2023 11:20', accion: 'Solicitud Envío Custodio', mov: 'Instituto -> Custodio', user: 'Admin. Central' }
     ]
   };
@@ -484,7 +582,7 @@
     { id: 902, it: '132', ficha: '1007', paciente: 'Pedro Lira', profesional: 'FISIATRÍA', nombreSolicitante: 'María González', estado: 'PENDIENTE', fecha: '30/03/2026' },
   ];
   let selectedId = null;
-  let modoActualCustodio = 'RETIRO';
+  let modoActualCustodio = 'SCANNER';
   let carritoCustodio = [];
   let apiDataCustodio = { caja: null, ff: null };
 
@@ -639,10 +737,8 @@
     document.querySelectorAll('.btn-accion').forEach(b => b.style.outline = 'none');
     if (btn) btn.style.outline = '3px solid #212529';
     const cfg = {
-      'RETIRO':      { titInv: 'Fichas en Instituto (Listas para despacho)', cart: 'PREPARAR ENVÍO',          api: true,  motivo: false },
-      'REINTEGRO':   { titInv: 'Fichas en Custodio (Para Reintegro)',         cart: 'SOLICITAR RETORNO AL IT', api: false, motivo: false },
-      'SCANNER':     { titInv: 'Fichas disponibles para Digitalización',      cart: 'SOLICITAR DIGITALIZACIÓN',api: false, motivo: true  },
-      'DESTRUCCION': { titInv: 'Fichas Pasivas elegibles para Destrucción',   cart: 'SOLICITAR DESTRUCCIÓN',   api: false, motivo: true  }
+      'SCANNER':     { titInv: 'Fichas SFD disponibles para Digitalización',   cart: 'SOLICITAR DIGITALIZACIÓN', api: false, motivo: true  },
+      'DESTRUCCION': { titInv: 'Fichas Pasivas elegibles para Baja Documental',     cart: 'SOLICITAR BAJA DOCUMENTAL',    api: false, motivo: true  }
     }[modo];
     document.getElementById('panelConfig').className = 'panel-right-cus mode-' + (modo === 'RETIRO' ? 'RETIRO' : 'REINTEGRO');
     document.getElementById('tituloInventario').innerText = cfg.titInv;
@@ -651,10 +747,14 @@
     document.getElementById('datosAPI').style.display = 'none';
     document.getElementById('motivoBox').style.display = cfg.motivo ? 'block' : 'none';
     const mo = document.getElementById('motivoOperacion'); if (mo) mo.value = '';
+    const inputActa = document.getElementById('inputActaDestruccion');
+    if (inputActa) inputActa.value = '';
+    const nombreActa = document.getElementById('nombreActaDestruccion');
+    if (nombreActa) nombreActa.innerText = 'Ningún archivo adjunto';
+    const btnVer = document.getElementById('btnVerActa'); if (btnVer) btnVer.style.display = 'none';
+    if (_actaURL) { URL.revokeObjectURL(_actaURL); _actaURL = null; _actaTipo = null; }
     const btnFin = document.getElementById('btnFinalizar');
-    btnFin.innerText = (modo === 'DESTRUCCION') ? 'Confirmar Destrucción' :
-                       (modo === 'SCANNER')     ? 'Confirmar Envío a Scanner' :
-                       (modo === 'REINTEGRO')   ? 'Confirmar Retorno' : 'Confirmar Solicitud';
+    btnFin.innerText = (modo === 'DESTRUCCION') ? 'Confirmar Baja Documental' : 'Confirmar Envío a Scanner';
     renderTablaCustodio();
     renderCarritoCustodio();
   }
@@ -665,8 +765,6 @@
       if (!(currentAdminMode === 'TODOS' || d.it === currentAdminMode)) return false;
       if (!(d.f.includes(busqueda) || d.p.toLowerCase().includes(busqueda))) return false;
       if (d.ef === 'DESTRUIDA') return false;
-      if (modoActualCustodio === 'RETIRO')      return d.u === 'INSTITUTO' && d.e === 'PASIVO';
-      if (modoActualCustodio === 'REINTEGRO')   return d.u === 'CUSTODIO';
       if (modoActualCustodio === 'SCANNER')     return d.ef !== 'DIGITALIZADA' && d.ef !== 'EN_SCANNER';
       if (modoActualCustodio === 'DESTRUCCION') return d.e === 'PASIVO' && d.ef !== 'EN_SCANNER';
       return true;
@@ -699,10 +797,8 @@
   }
 
   function agregarAlCarrito(id) {
-    if(modoActualCustodio === 'RETIRO' && !apiDataCustodio.caja) return alert("Debe sincronizar con la API primero.");
     if(carritoCustodio.find(x => x.f === id)) return;
     const item = {...masterData.find(x => x.f === id)};
-    if(modoActualCustodio === 'RETIRO') item.tempFF = "FF-" + (apiDataCustodio.ff + carritoCustodio.length);
     carritoCustodio.push(item);
     renderCarritoCustodio();
   }
@@ -710,17 +806,23 @@
   function renderCarritoCustodio() {
     const div = document.getElementById('listaSeleccion');
     const btn = document.getElementById('btnFinalizar');
-    btn.disabled = carritoCustodio.length === 0;
-    if(carritoCustodio.length === 0) {
+    const tieneFichas = carritoCustodio.length > 0;
+    const esDestruccion = modoActualCustodio === 'DESTRUCCION';
+
+    btn.disabled = !tieneFichas;
+    btn.title = tieneFichas ? (esDestruccion ? 'Continuar para adjuntar acta' : 'Confirmar') : 'Debe seleccionar al menos una ficha';
+    btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
+    btn.style.opacity = btn.disabled ? '0.55' : '1';
+
+
+    if(!tieneFichas) {
       div.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">Sin fichas seleccionadas</div>';
       return;
     }
     div.innerHTML = carritoCustodio.map((item, idx) => {
       let extra = '';
-      if (modoActualCustodio === 'RETIRO')      extra = '<span class="badge-file">'+item.tempFF+'</span>';
-      else if (modoActualCustodio === 'REINTEGRO') extra = '<small>Caja:'+item.c+'</small>';
-      else if (modoActualCustodio === 'SCANNER')   extra = '<span class="estado-badge est-scanner">SCANNER</span>';
-      else if (modoActualCustodio === 'DESTRUCCION') extra = '<span class="estado-badge est-destruida">DESTRUIR</span>';
+      if (modoActualCustodio === 'SCANNER')     extra = '<span class="estado-badge est-scanner">SCANNER</span>';
+      else if (modoActualCustodio === 'DESTRUCCION') extra = '<span class="estado-badge est-destruida">BAJA DOCUMENTAL</span>';
       return `
       <div class="cart-item">
         <div style="font-size:11px"><b>${item.f}</b><br>${item.p}</div>
@@ -741,24 +843,14 @@
       return alert('Debe indicar el motivo / observación.');
     }
     if (modoActualCustodio === 'DESTRUCCION') {
-      if (!confirm(`¿Confirma la DESTRUCCIÓN de ${carritoCustodio.length} ficha(s)? Esta acción es irreversible.`)) return;
+      const actaFile = document.getElementById('inputActaDestruccion');
+      if (!actaFile || !actaFile.files || !actaFile.files[0]) {
+        return alert('Debe adjuntar el Acta de Autorización de Baja antes de confirmar.');
+      }
+      if (!confirm(`¿Confirma la BAJA DOCUMENTAL de ${carritoCustodio.length} ficha(s)? Esta acción es irreversible.`)) return;
     }
     const hoy = new Date().toLocaleDateString('es-CL');
-    if (modoActualCustodio === 'RETIRO') {
-      const caja = apiDataCustodio.caja;
-      document.getElementById('lblCajaLabel').innerText = "ID CAJA";
-      document.getElementById('lblCajaID').innerText = caja;
-      document.getElementById('msgConfirmacion').innerText = `Se han asignado ${carritoCustodio.length} fichas a la caja ${caja}.`;
-      document.getElementById('botonesImpresion').style.display = 'grid';
-      document.getElementById('printTitle').innerText = 'Documentos de Despacho';
-    } else if (modoActualCustodio === 'REINTEGRO') {
-      const ticket = "REQ-" + Math.floor(Math.random()*90000 + 10000);
-      document.getElementById('lblCajaLabel').innerText = "SEGUIMIENTO";
-      document.getElementById('lblCajaID').innerText = ticket;
-      document.getElementById('msgConfirmacion').innerText = `Solicitud de reingreso registrada con éxito.`;
-      document.getElementById('botonesImpresion').style.display = 'none';
-      document.getElementById('printTitle').innerText = 'Confirmación de Retorno';
-    } else if (modoActualCustodio === 'SCANNER') {
+    if (modoActualCustodio === 'SCANNER') {
       const ticket = "SCN-" + Math.floor(Math.random()*90000 + 10000);
       document.getElementById('lblCajaLabel').innerText = "TICKET SCANNER";
       document.getElementById('lblCajaID').innerText = ticket;
@@ -779,15 +871,9 @@
       let real = masterData.find(m => m.f === c.f);
       if (!real) return;
       real.ult = hoy;
-      if (modoActualCustodio === 'RETIRO') {
-        real.u = 'CUSTODIO'; real.c = apiDataCustodio.caja; real.ff = c.tempFF; real.ef = 'EN_CUSTODIO';
-        registrarMovimiento(real.f, 'Despacho a Custodio', 'Instituto -> Custodio');
-      } else if (modoActualCustodio === 'REINTEGRO') {
-        real.u = 'INSTITUTO'; real.c = 'N/A'; real.ff = 'N/A'; real.ef = 'ACTIVA';
-        registrarMovimiento(real.f, 'Retorno de Custodio', 'Custodio -> Instituto');
-      } else if (modoActualCustodio === 'SCANNER') {
+      if (modoActualCustodio === 'SCANNER') {
         real.ef = 'EN_SCANNER';
-        registrarMovimiento(real.f, 'Solicitud de Scanner ('+motivo+')', (real.u==='CUSTODIO'?'Custodio':'Instituto')+' -> Scanner');
+        registrarMovimiento(real.f, 'Solicitud de Scanner ('+motivo+')', 'Instituto -> Scanner');
       } else if (modoActualCustodio === 'DESTRUCCION') {
         real.ef = 'DESTRUIDA';
         registrarMovimiento(real.f, 'Destrucción de Ficha ('+motivo+')', 'Baja definitiva');
@@ -869,10 +955,8 @@
   const ESTADO_META = {
     'ACTIVA':       { lbl: 'Ficha Activa',       cls: 'est-activa',    card: 'ec-activa' },
     'DIGITALIZADA': { lbl: 'Ficha Digitalizada', cls: 'est-digital',   card: 'ec-digital' },
-    'EN_CUSTODIO':  { lbl: 'En Custodio',        cls: 'est-custodio',  card: 'ec-custodio' },
     'EN_SCANNER':   { lbl: 'En Scanner',         cls: 'est-scanner',   card: 'ec-scanner' },
-    'EN_RETIRO':    { lbl: 'En Retiro',          cls: 'est-retiro',    card: 'ec-retiro' },
-    'DESTRUIDA':    { lbl: 'Ficha Destruida',    cls: 'est-destruida', card: 'ec-destruida' }
+    'DESTRUIDA':    { lbl: 'Baja Documental',    cls: 'est-destruida', card: 'ec-destruida' }
   };
 
   function renderEstadoFichas() {
@@ -986,9 +1070,299 @@
     renderPasivas();
     renderTablaCustodio();
     renderEstadoFichas();
-    const b = document.getElementById('btnAccEnvio');
+    const b = document.getElementById('btnAccScanner');
     if (b) b.style.outline = '3px solid #212529';
+    _registrarAcceso();
   };
+
+  // ===== Acta de Autorización de Baja (adjunto inline en panel) =====
+  let _actaURL = null;
+  let _actaTipo = null;
+  function onSeleccionActa(input) {
+    const f = input.files && input.files[0];
+    const lbl = document.getElementById('nombreActaDestruccion');
+    const btnVer = document.getElementById('btnVerActa');
+    const btnConf = document.getElementById('btnConfirmarBajaModal');
+    const msgErr = document.getElementById('msgActaError');
+    if (_actaURL) { URL.revokeObjectURL(_actaURL); _actaURL = null; }
+    if (msgErr) msgErr.innerText = '';
+    let actaOk = false;
+    if (f) {
+      const tiposOk = ['application/pdf','image/jpeg','image/jpg','image/png'];
+      if (!tiposOk.includes(f.type)) {
+        if (msgErr) msgErr.innerText = 'Formato no permitido. Use PDF, JPG o PNG.';
+        lbl.innerText = 'Archivo rechazado';
+        btnVer.style.display = 'none';
+      } else if (f.size > 10*1024*1024) {
+        if (msgErr) msgErr.innerText = 'El acta no puede superar 10 MB.';
+        lbl.innerText = 'Archivo rechazado';
+        btnVer.style.display = 'none';
+      } else {
+        lbl.innerText = 'Adjunto: ' + f.name;
+        _actaURL = URL.createObjectURL(f);
+        _actaTipo = f.type;
+        btnVer.style.display = 'inline-block';
+        actaOk = true;
+      }
+    } else {
+      lbl.innerText = 'Ningún archivo adjunto';
+      btnVer.style.display = 'none';
+    }
+    if (btnConf) {
+      btnConf.disabled = !actaOk;
+      btnConf.style.cursor = actaOk ? 'pointer' : 'not-allowed';
+      btnConf.style.opacity = actaOk ? '1' : '0.55';
+    }
+  }
+  function iniciarConfirmacion() {
+    if (carritoCustodio.length === 0) return;
+    if (modoActualCustodio === 'DESTRUCCION') abrirModalSubirActa();
+    else procesarOperacion();
+  }
+  function abrirModalSubirActa() {
+    const inp = document.getElementById('inputActaDestruccion'); if (inp) inp.value = '';
+    const lbl = document.getElementById('nombreActaDestruccion'); if (lbl) lbl.innerText = 'Ningún archivo adjunto';
+    const btnVer = document.getElementById('btnVerActa'); if (btnVer) btnVer.style.display = 'none';
+    const btnConf = document.getElementById('btnConfirmarBajaModal');
+    if (btnConf) { btnConf.disabled = true; btnConf.style.cursor = 'not-allowed'; btnConf.style.opacity = '0.55'; }
+    const cont = document.getElementById('contFichasBaja'); if (cont) cont.innerText = carritoCustodio.length;
+    const msgErr = document.getElementById('msgActaError'); if (msgErr) msgErr.innerText = '';
+    if (_actaURL) { URL.revokeObjectURL(_actaURL); _actaURL = null; _actaTipo = null; }
+    document.getElementById('modalSubirActa').style.display = 'flex';
+  }
+  function cerrarModalSubirActa() {
+    document.getElementById('modalSubirActa').style.display = 'none';
+  }
+  function confirmarBajaConActa() {
+    const btnConf = document.getElementById('btnConfirmarBajaModal');
+    if (!btnConf || btnConf.disabled) return;
+    cerrarModalSubirActa();
+    procesarOperacion();
+  }
+  function abrirModalActa() {
+    if (!_actaURL) return;
+    const body = document.getElementById('modalActaBody');
+    if (_actaTipo && _actaTipo.startsWith('image/')) {
+      body.innerHTML = '<img src="'+_actaURL+'" style="max-width:100%; max-height:100%; object-fit:contain;">';
+    } else {
+      body.innerHTML = '<iframe src="'+_actaURL+'" style="width:100%; height:100%; border:none; background:#fff;"></iframe>';
+    }
+    document.getElementById('modalActa').style.display = 'flex';
+  }
+  function cerrarModalActa() {
+    document.getElementById('modalActa').style.display = 'none';
+    document.getElementById('modalActaBody').innerHTML = '';
+  }
+
+  // ===== MÓDULO AUDITORÍA =====
+  // Log centralizado de auditoría: cada acción registrada en el sistema queda aquí también.
+  let logAuditoria = [];
+  let audPagActual = 1;
+  const AUD_POR_PAG = 20;
+
+  const AUD_TIPO_META = {
+    'SOLICITUD':      { color: '#d4edda', texto: '#155724', label: 'Nueva Solicitud' },
+    'DIGITALIZACIÓN': { color: '#cce5ff', texto: '#004085', label: 'Digitalización'  },
+    'SCANNER':        { color: '#e2d9f3', texto: '#4b2a87', label: 'Envío a Scanner' },
+    'DESTRUCCIÓN':    { color: '#f8d7da', texto: '#721c24', label: 'Baja Documental' },
+    'SISTEMA':        { color: '#e9ecef', texto: '#495057', label: 'Sistema / Acceso'}
+  };
+
+  function _usuarioActual() {
+    const sel = document.getElementById('profileSelect');
+    return sel ? sel.options[sel.selectedIndex].text : 'Sistema';
+  }
+
+  function _itActual(itParam) {
+    if (itParam) return itParam;
+    if (currentAdminMode !== 'TODOS') return currentAdminMode;
+    return '—';
+  }
+
+  function _ahora() {
+    const n = new Date();
+    const pad = v => String(v).padStart(2,'0');
+    return `${pad(n.getDate())}/${pad(n.getMonth()+1)}/${n.getFullYear()} ${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  }
+
+  function registrarAuditoria(tipo, ficha, paciente, it, descripcion) {
+    logAuditoria.unshift({
+      fecha:       _ahora(),
+      tipo:        tipo,
+      ficha:       ficha  || '—',
+      paciente:    paciente || '—',
+      it:          _itActual(it),
+      usuario:     _usuarioActual(),
+      descripcion: descripcion || ''
+    });
+  }
+
+  // Parchamos confirmarSolicitud para que registre en auditoría
+  const _origConfirmarSolicitud = confirmarSolicitud;
+  confirmarSolicitud = function() {
+    const f    = document.getElementById('buscFicha').value;
+    const pac  = dbPacientes[f] ? (dbPacientes[f].n + ' ' + dbPacientes[f].ap) : f;
+    const it   = document.getElementById('solIT').value;
+    const prof = document.getElementById('solProfesion').value;
+    _origConfirmarSolicitud();
+    registrarAuditoria('SOLICITUD', f, pac, it, 'Nueva solicitud de ficha - Profesional: ' + prof);
+  };
+
+  // Parchamos procesarOperacion para auditar scanner y destrucción
+  const _origProcesarOperacion = procesarOperacion;
+  procesarOperacion = function() {
+    const motivo = (document.getElementById('motivoOperacion')?.value || '').trim();
+    // Capturamos el carrito ANTES de llamar el original (que lo vacía)
+    const carritoSnap = [...carritoCustodio];
+    const modoSnap    = modoActualCustodio;
+    _origProcesarOperacion();
+    // Registrar una entrada por ficha procesada
+    carritoSnap.forEach(c => {
+      if (modoSnap === 'SCANNER') {
+        registrarAuditoria('SCANNER', c.f, c.p, c.it, 'Solicitud scanner. Motivo: ' + (motivo || 'N/A'));
+      } else if (modoSnap === 'DESTRUCCION') {
+        registrarAuditoria('DESTRUCCIÓN', c.f, c.p, c.it, 'Baja documental confirmada. Motivo: ' + (motivo || 'N/A'));
+      }
+    });
+  };
+
+  // Parchamos mcArchivoSeleccionado para auditar digitalización
+  // IMPORTANTE: capturar selectedId ANTES de llamar al original, porque éste lo pone en null
+  const _origMcArchivoSeleccionado = mcArchivoSeleccionado;
+  mcArchivoSeleccionado = function() {
+    const idSnap = selectedId;
+    _origMcArchivoSeleccionado();
+    if (idSnap) {
+      const sol = solicitudes.find(x => x.id === idSnap);
+      if (sol) {
+        registrarAuditoria('DIGITALIZACIÓN', sol.ficha, sol.paciente, sol.it,
+          'Documento digitalizado — Solicitud #' + sol.id + ' | ' + sol.profesional + ' | Solicitante: ' + (sol.nombreSolicitante || 'N/A'));
+      }
+    }
+  };
+
+  // Registro inicial de acceso al sistema + solicitudes precargadas en bandeja
+  function _registrarAcceso() {
+    // Registrar solicitudes que ya existen en el sistema al momento de carga
+    // Se insertan al final del log (push) para que queden como las más antiguas
+    solicitudes.forEach(s => {
+      logAuditoria.push({
+        fecha:       s.fecha + ' 00:00:00',
+        tipo:        s.estado === 'DIGITALIZADA' ? 'DIGITALIZACIÓN' : 'SOLICITUD',
+        ficha:       s.ficha,
+        paciente:    s.paciente,
+        it:          s.it,
+        usuario:     s.nombreSolicitante || 'Sistema (precargado)',
+        descripcion: s.estado === 'DIGITALIZADA'
+          ? 'Solicitud ya digitalizada al cargar el sistema — ' + s.profesional
+          : 'Solicitud pendiente en bandeja al cargar el sistema — ' + s.profesional + ' | Solicitante: ' + (s.nombreSolicitante || 'N/A')
+      });
+    });
+    registrarAuditoria('SISTEMA', '—', '—', '—', 'Acceso al sistema');
+  }
+
+  // Parchamos cambiarPerfil para registrar cambios de sesión
+  const _origCambiarPerfil = cambiarPerfil;
+  cambiarPerfil = function() {
+    _origCambiarPerfil();
+    const sel = document.getElementById('profileSelect');
+    const perfil = sel ? sel.options[sel.selectedIndex].text : '?';
+    registrarAuditoria('SISTEMA', '—', '—', '—', 'Cambio de perfil activo → ' + perfil);
+    renderAuditoria();
+  };
+
+  function renderAuditoria() {
+    audPagActual = 1;
+    _pintarAuditoria();
+  }
+
+  function _pintarAuditoria() {
+    const filtTipo    = document.getElementById('audFiltroTipo')?.value    || 'TODOS';
+    const filtIT      = document.getElementById('audFiltroIT')?.value      || 'TODOS';
+    const filtUsuario = (document.getElementById('audFiltroUsuario')?.value || '').toLowerCase();
+    const filtFicha   = (document.getElementById('audFiltroFicha')?.value  || '').toLowerCase();
+
+    const itAdmin = currentAdminMode !== 'TODOS' ? currentAdminMode : null;
+
+    const filtrados = logAuditoria.filter(e => {
+      if (itAdmin && e.it !== '—' && e.it !== itAdmin) return false;
+      if (filtTipo    !== 'TODOS' && e.tipo    !== filtTipo)                     return false;
+      if (filtIT      !== 'TODOS' && e.it      !== filtIT)                       return false;
+      if (filtUsuario && !e.usuario.toLowerCase().includes(filtUsuario))          return false;
+      if (filtFicha   && !e.ficha.toLowerCase().includes(filtFicha))              return false;
+      return true;
+    });
+
+    // Resumen por tipo
+    const resDiv = document.getElementById('audResumen');
+    if (resDiv) {
+      const conteos = {};
+      filtrados.forEach(e => { conteos[e.tipo] = (conteos[e.tipo] || 0) + 1; });
+      resDiv.innerHTML = Object.keys(AUD_TIPO_META).map(k => {
+        const m = AUD_TIPO_META[k];
+        const n = conteos[k] || 0;
+        return `<div style="background:${m.color}; color:${m.texto}; border-radius:6px; padding:10px 12px; border:1px solid ${m.color};">
+          <div style="font-size:20px; font-weight:800;">${n}</div>
+          <div style="font-size:10px; font-weight:700; text-transform:uppercase;">${m.label}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Paginación
+    const total = filtrados.length;
+    const totalPags = Math.max(1, Math.ceil(total / AUD_POR_PAG));
+    if (audPagActual > totalPags) audPagActual = totalPags;
+    const inicio = (audPagActual - 1) * AUD_POR_PAG;
+    const pagina = filtrados.slice(inicio, inicio + AUD_POR_PAG);
+
+    const tbody = document.getElementById('bodyAuditoria');
+    if (!tbody) return;
+
+    if (pagina.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#888;">No hay registros de auditoría para los filtros seleccionados.</td></tr>';
+    } else {
+      tbody.innerHTML = pagina.map(e => {
+        const m = AUD_TIPO_META[e.tipo] || AUD_TIPO_META['SISTEMA'];
+        return `<tr>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px; white-space:nowrap;">${e.fecha}</td>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee;">
+            <span style="background:${m.color}; color:${m.texto}; padding:3px 8px; border-radius:3px; font-size:10px; font-weight:bold;">${m.label}</span>
+          </td>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-weight:bold;">${e.ficha}</td>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px;">${e.paciente}</td>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px;">${e.it}</td>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px; color:#2b6cb0; font-weight:600;">${e.usuario}</td>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px; color:#555;">${e.descripcion}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Render paginación
+    const pagDiv = document.getElementById('audPaginacion');
+    if (pagDiv) {
+      let html = `<span>Total: <b>${total}</b> registro(s) &nbsp;|&nbsp; Página <b>${audPagActual}</b> de <b>${totalPags}</b></span>`;
+      html += `<button class="btn btn-secondary" style="padding:4px 10px; font-size:11px;" ${audPagActual<=1?'disabled':''} onclick="audPagActual--;_pintarAuditoria()">‹ Anterior</button>`;
+      html += `<button class="btn btn-secondary" style="padding:4px 10px; font-size:11px;" ${audPagActual>=totalPags?'disabled':''} onclick="audPagActual++;_pintarAuditoria()">Siguiente ›</button>`;
+      pagDiv.innerHTML = html;
+    }
+  }
+
+  function exportarAuditoriaCSV() {
+    const filas = [['Fecha y Hora','Tipo Acción','N° Ficha','Paciente','IT','Usuario Responsable','Descripción']];
+    logAuditoria.forEach(e => {
+      const m = AUD_TIPO_META[e.tipo] || AUD_TIPO_META['SISTEMA'];
+      filas.push([e.fecha, m.label, e.ficha, e.paciente, e.it, e.usuario, e.descripcion]);
+    });
+    const csv = filas.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'auditoria_fichas.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+  // ===== FIN MÓDULO AUDITORÍA =====
 </script>
+
 </body>
 </html>
+
