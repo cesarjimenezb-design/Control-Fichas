@@ -403,7 +403,6 @@
             <option value="DIGITALIZACIÓN">Digitalización</option>
             <option value="SCANNER">Envío a Scanner</option>
             <option value="DESTRUCCIÓN">Baja Documental</option>
-            <option value="SISTEMA">Sistema / Acceso</option>
           </select>
         </div>
         <div class="form-group">
@@ -438,10 +437,12 @@
             <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Fecha y Hora</th>
             <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Tipo Acción</th>
             <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">N° Ficha</th>
-            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Paciente / Detalle</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Paciente</th>
             <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">IT</th>
             <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Usuario Responsable</th>
-            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Descripción</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Profesional</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Motivo</th>
+            <th style="background:#f8f9fa; padding:10px; text-align:left; border-bottom:2px solid #dee2e6; color:#6c757d;">Detalle</th>
           </tr>
         </thead>
         <tbody id="bodyAuditoria"></tbody>
@@ -452,6 +453,35 @@
 
   </div>
 </main>
+
+<div id="modalFichaNoDisponible" class="modal-overlay">
+  <div class="modal-content">
+    <div style="color: #856404; font-size: 44px;">&#9888;&#65039;</div>
+    <h3 style="color: #856404; margin: 10px 0 8px;">Solicitud Requiere Revisión</h3>
+    <p style="font-size: 13px; color: #555; margin: 0 0 8px;">La ficha <strong id="mdNdFichaNum"></strong> del paciente</p>
+    <p style="font-size: 14px; font-weight: 700; color: #212529; margin: 0 0 12px;" id="mdNdPacNombre"></p>
+    <p style="font-size: 12px; color: #555; margin: 0 0 18px;">no se encuentra disponible para atención en este momento.<br>La solicitud ha sido <strong style="color:#856404;">derivada al equipo de archivo</strong> para su gestión.</p>
+    <div style="background:#fffbea; border:1px solid #f6e05e; border-radius:6px; padding:10px 14px; font-size:11px; color:#744210; margin-bottom:20px; text-align:left;">
+      <div>&#8505;&#65039; El equipo de archivo contactará al profesional solicitante a la brevedad para informar el estado y coordinar las acciones necesarias.</div>
+    </div>
+    <button class="btn btn-secondary" onclick="cerrarModal('modalFichaNoDisponible'); limpiarCamposSolicitud();">Entendido</button>
+  </div>
+</div>
+
+<div id="modalFichaNoEscaneable" class="modal-overlay">
+  <div class="modal-content">
+    <div style="color: #6c757d; font-size: 44px;">&#128196;</div>
+    <h3 style="color: #495057; margin: 10px 0 8px;">Solicitud en Gestión</h3>
+    <p style="font-size: 13px; color: #555; margin: 0 0 8px;">La ficha <strong id="mdNeFichaNum"></strong> del paciente</p>
+    <p style="font-size: 14px; font-weight: 700; color: #212529; margin: 0 0 12px;" id="mdNePacNombre"></p>
+    <p style="font-size: 12px; color: #555; margin: 0 0 18px;">no se encuentra disponible para escaneo en este momento.<br>Su solicitud ha sido <strong style="color:#495057;">registrada y derivada al equipo de archivo clínico</strong> para gestión administrativa.</p>
+    <div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:10px 14px; font-size:11px; color:#495057; margin-bottom:20px; text-align:left;">
+      <div>&#8505;&#65039; El equipo de archivo se contactará con el profesional solicitante para coordinar los pasos siguientes y mantenerle informado del estado de la gestión.</div>
+    </div>
+    <button class="btn btn-secondary" onclick="cerrarModal('modalFichaNoEscaneable'); limpiarCamposSolicitud();">Entendido</button>
+  </div>
+</div>
+
 
 <div id="modalYaDigitalizada" class="modal-overlay">
   <div class="modal-content">
@@ -544,12 +574,14 @@
     '1007': { r:'17.556.443-2', n:'Pedro', ap:'Lira', am:'Pinto', s:'' },
     '1008': { r:'14.998.776-5', n:'Sonia', ap:'Díaz', am:'Valdés', s:'' },
     '1009': { r:'19.002.112-1', n:'Hugo', ap:'Torres', am:'Luna', s:'' },
-    '1010': { r:'13.445.667-8', n:'Beatriz', ap:'Meza', am:'Peña', s:'' }
+    '1010': { r:'13.445.667-8', n:'Beatriz', ap:'Meza', am:'Peña', s:'' },
+    '1011': { r:'16.778.221-K', n:'Luis', ap:'Fuentes', am:'Vega', s:'' }
   };
 
   let masterData = [
     { f: '1001',   r: '12.345.678-9', p: 'Carlos Araya',        u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', ef: 'ACTIVA',       ult: '01/04/2026' },
     { f: '1002',   r: '15.667.889-0', p: 'Ana Zúñiga',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', ef: 'ACTIVA',       ult: '02/04/2026' },
+    { f: '1003',   r: '18.112.334-5', p: 'Roberto Méndez',      u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', ef: 'NO_DISPONIBLE', ult: '10/04/2026' },
     { f: '102060', r: '11.443.221-0', p: 'Roberto Tapia',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '132', ef: 'ACTIVA',       ult: '03/04/2026' },
     { f: '104001', r: '10.111.222-3', p: 'Sofía Herrera',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '133', ef: 'DIGITALIZADA', ult: '15/03/2026' },
     { f: '104002', r: '14.222.333-4', p: 'Diego Contreras',     u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', ef: 'ACTIVA',       ult: '04/04/2026' },
@@ -562,8 +594,10 @@
     { f: '102050', r: '9.334.556-7',  p: 'Ana Torres',          u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'ACTIVA',       ult: '03/06/2026' },
     { f: '103011', r: '17.665.443-2', p: 'Elena Beltrán',       u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '132', ef: 'ACTIVA',       ult: '03/06/2026' },
     { f: '103012', r: '20.112.334-8', p: 'Mario Rojas',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '132', ef: 'ACTIVA',       ult: '03/06/2026' },
-    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'ACTIVA',       ult: '03/06/2026' }
+    { f: '105001', r: '14.678.901-2', p: 'Fernanda Castillo',   u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'PASIVO', it: '131', ef: 'ACTIVA',       ult: '03/06/2026' },
+    { f: '1011',   r: '16.778.221-K', p: 'Luis Fuentes',         u: 'INSTITUTO', c: 'N/A',         ff: 'N/A',      e: 'ACTIVO', it: '131', ef: 'NO_ESCANEABLE', ult: '08/04/2026' }
   ];
+
 
   const dbTrazabilidad = {
     '102040': [
@@ -668,7 +702,20 @@
       document.getElementById('mdSolFecha').textContent   = yaDigitalizada.fecha;
       document.getElementById('mdSolProfesional').textContent = yaDigitalizada.profesional;
       document.getElementById('modalYaDigitalizada').style.display = 'flex';
-      return; 
+      return;
+    }
+    const fichaData = masterData.find(d => d.f === f);
+    if (fichaData && fichaData.ef === 'NO_DISPONIBLE') {
+      document.getElementById('mdNdFichaNum').textContent  = f;
+      document.getElementById('mdNdPacNombre').textContent = p.n + ' ' + p.ap + ' ' + p.am;
+      document.getElementById('modalFichaNoDisponible').style.display = 'flex';
+      return;
+    }
+    if (fichaData && fichaData.ef === 'NO_ESCANEABLE') {
+      document.getElementById('mdNeFichaNum').textContent  = f;
+      document.getElementById('mdNePacNombre').textContent = p.n + ' ' + p.ap + ' ' + p.am;
+      document.getElementById('modalFichaNoEscaneable').style.display = 'flex';
+      return;
     }
     document.getElementById('pRut').value    = p.r;
     document.getElementById('pNombre').value = p.n;
@@ -738,7 +785,7 @@
     if (btn) btn.style.outline = '3px solid #212529';
     const cfg = {
       'SCANNER':     { titInv: 'Fichas SFD disponibles para Digitalización',   cart: 'SOLICITAR DIGITALIZACIÓN', api: false, motivo: true  },
-      'DESTRUCCION': { titInv: 'Fichas Pasivas elegibles para Baja Documental',     cart: 'SOLICITAR BAJA DOCUMENTAL',    api: false, motivo: true  }
+      'DESTRUCCION': { titInv: 'Fichas Pasivas elegibles para Baja',     cart: 'SOLICITAR BAJA DOCUMENTAL',    api: false, motivo: true  }
     }[modo];
     document.getElementById('panelConfig').className = 'panel-right-cus mode-' + (modo === 'RETIRO' ? 'RETIRO' : 'REINTEGRO');
     document.getElementById('tituloInventario').innerText = cfg.titInv;
@@ -1072,7 +1119,6 @@
     renderEstadoFichas();
     const b = document.getElementById('btnAccScanner');
     if (b) b.style.outline = '3px solid #212529';
-    _registrarAcceso();
   };
 
   // ===== Acta de Autorización de Baja (adjunto inline en panel) =====
@@ -1164,8 +1210,7 @@
     'SOLICITUD':      { color: '#d4edda', texto: '#155724', label: 'Nueva Solicitud' },
     'DIGITALIZACIÓN': { color: '#cce5ff', texto: '#004085', label: 'Digitalización'  },
     'SCANNER':        { color: '#e2d9f3', texto: '#4b2a87', label: 'Envío a Scanner' },
-    'DESTRUCCIÓN':    { color: '#f8d7da', texto: '#721c24', label: 'Baja Documental' },
-    'SISTEMA':        { color: '#e9ecef', texto: '#495057', label: 'Sistema / Acceso'}
+    'DESTRUCCIÓN':    { color: '#f8d7da', texto: '#721c24', label: 'Baja Documental' }
   };
 
   function _usuarioActual() {
@@ -1185,7 +1230,8 @@
     return `${pad(n.getDate())}/${pad(n.getMonth()+1)}/${n.getFullYear()} ${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
   }
 
-  function registrarAuditoria(tipo, ficha, paciente, it, descripcion) {
+  function registrarAuditoria(tipo, ficha, paciente, it, extra) {
+    extra = extra || {};
     logAuditoria.unshift({
       fecha:       _ahora(),
       tipo:        tipo,
@@ -1193,7 +1239,9 @@
       paciente:    paciente || '—',
       it:          _itActual(it),
       usuario:     _usuarioActual(),
-      descripcion: descripcion || ''
+      profesional: extra.profesional || '—',
+      motivo:      extra.motivo      || '—',
+      detalle:     extra.detalle     || ''
     });
   }
 
@@ -1205,69 +1253,59 @@
     const it   = document.getElementById('solIT').value;
     const prof = document.getElementById('solProfesion').value;
     _origConfirmarSolicitud();
-    registrarAuditoria('SOLICITUD', f, pac, it, 'Nueva solicitud de ficha - Profesional: ' + prof);
+    registrarAuditoria('SOLICITUD', f, pac, it, {
+      profesional: prof,
+      motivo: 'Atención clínica',
+      detalle: 'Nueva solicitud de ficha registrada'
+    });
   };
 
   // Parchamos procesarOperacion para auditar scanner y destrucción
   const _origProcesarOperacion = procesarOperacion;
   procesarOperacion = function() {
     const motivo = (document.getElementById('motivoOperacion')?.value || '').trim();
-    // Capturamos el carrito ANTES de llamar el original (que lo vacía)
     const carritoSnap = [...carritoCustodio];
     const modoSnap    = modoActualCustodio;
     _origProcesarOperacion();
-    // Registrar una entrada por ficha procesada
     carritoSnap.forEach(c => {
       if (modoSnap === 'SCANNER') {
-        registrarAuditoria('SCANNER', c.f, c.p, c.it, 'Solicitud scanner. Motivo: ' + (motivo || 'N/A'));
+        registrarAuditoria('SCANNER', c.f, c.p, c.it, {
+          profesional: '—',
+          motivo: motivo || 'N/A',
+          detalle: 'Envío a scanner para digitalización'
+        });
       } else if (modoSnap === 'DESTRUCCION') {
-        registrarAuditoria('DESTRUCCIÓN', c.f, c.p, c.it, 'Baja documental confirmada. Motivo: ' + (motivo || 'N/A'));
+        registrarAuditoria('DESTRUCCIÓN', c.f, c.p, c.it, {
+          profesional: '—',
+          motivo: motivo || 'N/A',
+          detalle: 'Baja documental confirmada'
+        });
       }
     });
   };
 
-  // Parchamos mcArchivoSeleccionado para auditar digitalización
-  // IMPORTANTE: capturar selectedId ANTES de llamar al original, porque éste lo pone en null
+  // Parchamos mcArchivoSeleccionado para auditar digitalización en bandeja
   const _origMcArchivoSeleccionado = mcArchivoSeleccionado;
   mcArchivoSeleccionado = function() {
+    // Capturamos ANTES de llamar al original (que pone selectedId = null)
     const idSnap = selectedId;
+    const solSnap = solicitudes.find(x => x.id === idSnap);
+    const ambito  = document.getElementById('mcAmbito')?.value || '';
+    const tipoDoc = document.getElementById('mcTipoInput')?.value || '';
     _origMcArchivoSeleccionado();
-    if (idSnap) {
-      const sol = solicitudes.find(x => x.id === idSnap);
-      if (sol) {
-        registrarAuditoria('DIGITALIZACIÓN', sol.ficha, sol.paciente, sol.it,
-          'Documento digitalizado — Solicitud #' + sol.id + ' | ' + sol.profesional + ' | Solicitante: ' + (sol.nombreSolicitante || 'N/A'));
-      }
+    if (solSnap) {
+      registrarAuditoria('DIGITALIZACIÓN', solSnap.ficha, solSnap.paciente, solSnap.it, {
+        profesional: solSnap.profesional,
+        motivo: 'Solicitud #' + solSnap.id,
+        detalle: (tipoDoc ? tipoDoc + ' — ' : '') + (ambito || 'Documento digitalizado')
+      });
     }
   };
 
-  // Registro inicial de acceso al sistema + solicitudes precargadas en bandeja
-  function _registrarAcceso() {
-    // Registrar solicitudes que ya existen en el sistema al momento de carga
-    // Se insertan al final del log (push) para que queden como las más antiguas
-    solicitudes.forEach(s => {
-      logAuditoria.push({
-        fecha:       s.fecha + ' 00:00:00',
-        tipo:        s.estado === 'DIGITALIZADA' ? 'DIGITALIZACIÓN' : 'SOLICITUD',
-        ficha:       s.ficha,
-        paciente:    s.paciente,
-        it:          s.it,
-        usuario:     s.nombreSolicitante || 'Sistema (precargado)',
-        descripcion: s.estado === 'DIGITALIZADA'
-          ? 'Solicitud ya digitalizada al cargar el sistema — ' + s.profesional
-          : 'Solicitud pendiente en bandeja al cargar el sistema — ' + s.profesional + ' | Solicitante: ' + (s.nombreSolicitante || 'N/A')
-      });
-    });
-    registrarAuditoria('SISTEMA', '—', '—', '—', 'Acceso al sistema');
-  }
-
-  // Parchamos cambiarPerfil para registrar cambios de sesión
+  // Parchamos cambiarPerfil para re-renderizar auditoría al cambiar perfil
   const _origCambiarPerfil = cambiarPerfil;
   cambiarPerfil = function() {
     _origCambiarPerfil();
-    const sel = document.getElementById('profileSelect');
-    const perfil = sel ? sel.options[sel.selectedIndex].text : '?';
-    registrarAuditoria('SISTEMA', '—', '—', '—', 'Cambio de perfil activo → ' + perfil);
     renderAuditoria();
   };
 
@@ -1319,10 +1357,10 @@
     if (!tbody) return;
 
     if (pagina.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#888;">No hay registros de auditoría para los filtros seleccionados.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:#888;">No hay registros de auditoría para los filtros seleccionados.</td></tr>';
     } else {
       tbody.innerHTML = pagina.map(e => {
-        const m = AUD_TIPO_META[e.tipo] || AUD_TIPO_META['SISTEMA'];
+        const m = AUD_TIPO_META[e.tipo] || { color:'#e9ecef', texto:'#495057', label: e.tipo };
         return `<tr>
           <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px; white-space:nowrap;">${e.fecha}</td>
           <td style="padding:9px 10px; border-bottom:1px solid #eee;">
@@ -1332,7 +1370,9 @@
           <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px;">${e.paciente}</td>
           <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px;">${e.it}</td>
           <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px; color:#2b6cb0; font-weight:600;">${e.usuario}</td>
-          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px; color:#555;">${e.descripcion}</td>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px;">${e.profesional}</td>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px;">${e.motivo}</td>
+          <td style="padding:9px 10px; border-bottom:1px solid #eee; font-size:11px; color:#555;">${e.detalle}</td>
         </tr>`;
       }).join('');
     }
@@ -1348,10 +1388,10 @@
   }
 
   function exportarAuditoriaCSV() {
-    const filas = [['Fecha y Hora','Tipo Acción','N° Ficha','Paciente','IT','Usuario Responsable','Descripción']];
+    const filas = [['Fecha y Hora','Tipo Acción','N° Ficha','Paciente','IT','Usuario Responsable','Profesional','Motivo','Detalle']];
     logAuditoria.forEach(e => {
-      const m = AUD_TIPO_META[e.tipo] || AUD_TIPO_META['SISTEMA'];
-      filas.push([e.fecha, m.label, e.ficha, e.paciente, e.it, e.usuario, e.descripcion]);
+      const m = AUD_TIPO_META[e.tipo] || { label: e.tipo };
+      filas.push([e.fecha, m.label, e.ficha, e.paciente, e.it, e.usuario, e.profesional, e.motivo, e.detalle]);
     });
     const csv = filas.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\n');
     const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
