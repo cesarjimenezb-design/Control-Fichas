@@ -150,6 +150,51 @@
     .ec-destruida { border-left-color: #dc3545; }
     .ec-activa    { border-left-color: #28a745; }
     .ec-retiro    { border-left-color: #fd7e14; }
+
+    /* ===== MÓDULO SUPERVISIÓN DIGITALIZACIÓN ===== */
+    .sup-pendiente-badge { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .sup-completa-badge  { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .sup-obs-badge       { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+
+    .checklist-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); display:none; justify-content:center; align-items:center; z-index:2000; }
+    .checklist-modal-box { background:white; width:680px; max-height:90vh; border-radius:8px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.25); display:flex; flex-direction:column; }
+    .checklist-modal-header { background:var(--tel-red); color:white; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+    .checklist-modal-header h3 { margin:0; font-size:14px; font-weight:700; text-transform:uppercase; }
+    .checklist-modal-body { padding:20px; overflow-y:auto; flex:1; }
+    .checklist-meta { background:#f1f3f5; border-radius:6px; padding:12px 16px; margin-bottom:16px; display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px; }
+    .checklist-meta span { color:#555; } .checklist-meta b { color:#212529; }
+    .checklist-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .checklist-table th { background:#f8f9fa; padding:9px 10px; text-align:left; border-bottom:2px solid #dee2e6; color:#555; font-size:10px; text-transform:uppercase; }
+    .checklist-table td { padding:9px 10px; border-bottom:1px solid #eee; vertical-align:middle; }
+    .checklist-table tr:last-child td { border-bottom:none; }
+    .check-criterio { font-size:12px; color:#212529; }
+    .check-si   { display:inline-block; padding:4px 12px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; border:1px solid #28a745; color:#28a745; background:white; transition:.15s; }
+    .check-no   { display:inline-block; padding:4px 12px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; border:1px solid #dc3545; color:#dc3545; background:white; transition:.15s; }
+    .check-si.sel { background:#28a745; color:white; }
+    .check-no.sel { background:#dc3545; color:white; }
+    .check-btns { display:flex; gap:6px; }
+    .checklist-footer { padding:14px 20px; border-top:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#fafafa; }
+    .sup-progress { font-size:11px; color:#555; }
+    .sup-progress b { color:var(--tel-red); }
+    .sup-obs-area { margin-top:16px; }
+    .sup-obs-area label { font-size:10px; font-weight:800; color:#555; text-transform:uppercase; display:block; margin-bottom:4px; }
+    .sup-obs-area textarea { width:100%; padding:8px; font-size:12px; border:1px solid #ced4da; border-radius:4px; resize:vertical; }
+
+    .sup-resumen-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:18px; }
+    .sup-card { background:#fff; border:1px solid #e9ecef; border-radius:6px; padding:12px; border-left:4px solid #ccc; }
+    .sup-card .ec-num { font-size:22px; font-weight:800; }
+    .sup-card .ec-lbl { font-size:10px; text-transform:uppercase; color:#6c757d; font-weight:700; }
+    .sup-card-pend { border-left-color: #f0ad4e; }
+    .sup-card-ok   { border-left-color: #28a745; }
+    .sup-card-obs  { border-left-color: #dc3545; }
+    .sup-card-tot  { border-left-color: #007bff; }
+    /* Workflow pauta */
+    #wfStepBar .wf-dot { width:22px; height:22px; border-radius:50%; background:#e9ecef; color:#888; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+    #wfStepBar .wf-dot.done { background:#28a745; color:#fff; }
+    #wfStepBar .wf-dot.no   { background:#dc3545; color:#fff; }
+    #wfStepBar .wf-dot.active { outline:2px solid var(--tel-red); outline-offset:2px; }
+    #wfStepBar .wf-line { flex:0 0 14px; height:2px; background:#dee2e6; }
+
   </style>
 </head>
 <body>
@@ -217,6 +262,8 @@
       <button class="tab-btn" onclick="switchTab('admin', 'adm-cumplimiento', this)">Nivel Cumplimiento</button>
       <button class="tab-btn" onclick="switchTab('admin', 'adm-pasivas', this)">Fichas Pasivas / Archivo</button>
       <button class="tab-btn" onclick="switchTab('admin', 'adm-auditoria', this)">&#128274; Auditoría</button>
+      <button class="tab-btn" onclick="switchTab('admin', 'adm-pauta-uap', this)">📋 Pauta UAP</button>
+      <button class="tab-btn" onclick="switchTab('admin', 'adm-supervision', this)" id="tabSupervision">&#9989; Supervisión</button>
     </nav>
 
     <div id="adm-bandeja" class="panel active">
@@ -281,44 +328,7 @@
             <label style="font-size:10px; font-weight:800; color:#444; text-transform:uppercase; display:block; margin-bottom:4px;">Motivo / Observación</label>
             <textarea id="motivoOperacion" rows="2" style="width:100%; padding:6px; font-size:11px; border:1px solid #ced4da; border-radius:4px;" placeholder="Indique el motivo..."></textarea>
           </div>
-          <!-- Modal Subir Acta + Confirmar Baja -->
-          <div id="modalSubirActa" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9998; align-items:center; justify-content:center;">
-            <div style="background:#fff; width:90%; max-width:520px; border-radius:6px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
-              <div style="background:var(--tel-red); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
-                <strong style="font-size:13px; text-transform:uppercase;">📄 Adjuntar Acta de Autorización de Baja</strong>
-                <button onclick="cerrarModalSubirActa()" style="background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer; font-weight:bold;">×</button>
-              </div>
-              <div style="padding:16px;">
-                <div style="font-size:11px; color:#555; margin-bottom:10px;">Fichas a dar de baja: <b id="contFichasBaja">0</b></div>
-                <label style="font-size:10px; font-weight:800; color:var(--tel-red-dark); text-transform:uppercase; display:block; margin-bottom:6px;">Acta de Autorización (PDF, JPG, PNG · máx 10MB)</label>
-                <input type="file" id="inputActaDestruccion" accept=".pdf,.jpg,.jpeg,.png" onchange="onSeleccionActa(this)" style="width:100%; font-size:11px; padding:6px; border:1px dashed var(--tel-red); border-radius:4px; background:rgba(220,53,69,0.05);">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px;">
-                  <div id="nombreActaDestruccion" style="font-size:10px; color:#888;">Ningún archivo adjunto</div>
-                  <button type="button" id="btnVerActa" onclick="abrirModalActa()" style="display:none; font-size:10px; font-weight:700; padding:4px 10px; background:var(--tel-red); color:#fff; border:none; border-radius:3px; cursor:pointer;">👁 Ver Acta</button>
-                </div>
-                <div id="msgActaError" style="font-size:10px; color:var(--tel-red-dark); margin-top:6px; min-height:14px;"></div>
-              </div>
-              <div style="padding:10px 16px; background:#f5f5f5; border-top:1px solid #ddd; display:flex; justify-content:space-between; gap:8px;">
-                <button onclick="cerrarModalSubirActa()" style="padding:8px 14px; font-size:11px; font-weight:700; background:#6c757d; color:#fff; border:none; border-radius:3px; cursor:pointer;">Cancelar</button>
-                <button id="btnConfirmarBajaModal" onclick="confirmarBajaConActa()" disabled style="padding:8px 14px; font-size:11px; font-weight:700; background:var(--tel-red); color:#fff; border:none; border-radius:3px; cursor:not-allowed; opacity:0.55;">Confirmar Baja Documental</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Modal Preview Acta -->
-          <div id="modalActa" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
-            <div style="background:#fff; width:90%; max-width:800px; height:85vh; border-radius:6px; display:flex; flex-direction:column; overflow:hidden;">
-              <div style="background:var(--tel-red); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
-                <strong style="font-size:13px; text-transform:uppercase;">📄 Acta de Autorización de Baja</strong>
-                <button onclick="cerrarModalActa()" style="background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer; font-weight:bold;">×</button>
-              </div>
-              <div id="modalActaBody" style="flex:1; overflow:auto; background:#eee; display:flex; align-items:center; justify-content:center; padding:10px;"></div>
-              <div style="padding:10px 16px; background:#f5f5f5; border-top:1px solid #ddd; text-align:right;">
-                <button onclick="cerrarModalActa()" style="padding:6px 14px; font-size:11px; font-weight:700; background:#6c757d; color:#fff; border:none; border-radius:3px; cursor:pointer;">Cerrar</button>
-              </div>
-            </div>
-          </div>
-          <button class="btn btn-primary" id="btnFinalizar" onclick="iniciarConfirmacion()" disabled style="width: 100%; margin-top: 15px;">Confirmar Solicitud</button>
+          <button class="btn btn-primary" id="btnFinalizar" onclick="procesarOperacion()" disabled style="width: 100%; margin-top: 15px;">Confirmar Solicitud</button>
         </div>
       </div>
     </div>
@@ -451,6 +461,111 @@
     </div>
     <!-- ===== FIN MÓDULO AUDITORÍA ===== -->
 
+    <!-- ===== MÓDULO PAUTA UAP ===== -->
+    <div id="adm-pauta-uap" class="panel">
+      <h2>📋 Pauta UAP - Autodeclaración de Digitalización</h2>
+
+      <!-- Resumen rápido -->
+      <div class="sup-resumen-cards" id="supResumenCardsUAP"></div>
+
+      <!-- Filtros -->
+      <div class="filter-bar" style="grid-template-columns: 1fr 1fr 1fr 1fr auto auto;">
+        <div class="form-group"><label>Mes</label>
+          <select id="supFiltroMesUAP">
+            <option value="TODOS">TODOS LOS MESES</option>
+            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+            <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+            <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Instituto</label>
+          <select id="supFiltroITUAP">
+            <option value="TODOS">TODOS LOS IT</option>
+            <option value="131">131 - SANTIAGO</option><option value="132">132 - VALPARAÍSO</option>
+            <option value="133">133 - CONCEPCIÓN</option><option value="134">134 - ANTOFAGASTA</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Estado</label>
+          <select id="supFiltroEstadoUAP">
+            <option value="TODOS">TODOS</option>
+            <option value="PENDIENTE">PENDIENTE</option>
+            <option value="UAP_COMPLETA">UAP COMPLETA</option>
+            <option value="COMPLETA">SUPERVISIÓN COMPLETA</option>
+          </select>
+        </div>
+        <div class="form-group"><label>N° Ficha</label>
+          <input type="text" id="supFiltroBuscaUAP" placeholder="Buscar..." onkeyup="renderSupervisionUAP()">
+        </div>
+        <button class="btn btn-primary" onclick="renderSupervisionUAP()">Actualizar</button>
+        <button class="btn btn-excel" onclick="exportarSupervisionUAPCSV()">Exportar CSV</button>
+      </div>
+
+      <table id="tablaSupervisionUAP">
+        <thead>
+          <tr>
+            <th>N° Ficha</th><th>IT</th><th>Paciente</th><th>Fecha Digit.</th>
+            <th>Resp. UAP</th><th>Estado</th><th>Criterios Completados</th><th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="bodySupervisionUAP"></tbody>
+      </table>
+    </div>
+    <!-- ===== FIN MÓDULO PAUTA UAP ===== -->
+
+    <!-- ===== MÓDULO SUPERVISIÓN ===== -->
+    <div id="adm-supervision" class="panel">
+      <h2>&#9989; Supervisión - Verificación y Control</h2>
+
+      <!-- Resumen rápido -->
+      <div class="sup-resumen-cards" id="supResumenCards"></div>
+
+      <!-- Filtros -->
+      <div class="filter-bar" style="grid-template-columns: 1fr 1fr 1fr 1fr auto auto;">
+        <div class="form-group"><label>Mes</label>
+          <select id="supFiltroMes">
+            <option value="TODOS">TODOS LOS MESES</option>
+            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+            <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+            <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Instituto</label>
+          <select id="supFiltroIT">
+            <option value="TODOS">TODOS LOS IT</option>
+            <option value="131">131 - SANTIAGO</option><option value="132">132 - VALPARAÍSO</option>
+            <option value="133">133 - CONCEPCIÓN</option><option value="134">134 - ANTOFAGASTA</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Estado</label>
+          <select id="supFiltroEstado">
+            <option value="TODOS">TODOS</option>
+            <option value="UAP_COMPLETA">UAP COMPLETADA</option>
+            <option value="COMPLETA">SUPERVISIÓN COMPLETA</option>
+            <option value="CON_OBSERVACIONES">CON OBSERVACIONES</option>
+          </select>
+        </div>
+        <div class="form-group"><label>N° Ficha</label>
+          <input type="text" id="supFiltroBusca" placeholder="Buscar..." onkeyup="renderSupervision()">
+        </div>
+        <button class="btn btn-primary" onclick="renderSupervision()">Actualizar</button>
+        <button class="btn btn-excel" onclick="exportarSupervisionCSV()">Exportar CSV</button>
+      </div>
+
+      <table id="tablaSupervision">
+        <thead>
+          <tr>
+            <th>N° Ficha</th><th>IT</th><th>Paciente</th><th>Fecha Digit.</th>
+            <th>Resp. UAP</th><th>Resp. Supervisor</th>
+            <th>Criterios OK</th><th>Estado</th><th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="bodySupervision"></tbody>
+      </table>
+    </div>
+    <!-- ===== FIN MÓDULO SUPERVISIÓN ===== -->
+
   </div>
 </main>
 
@@ -560,8 +675,688 @@
   </div>
 </div>
 
+<!-- ===== MODAL CHECKLIST SUPERVISIÓN ===== -->
+<div class="checklist-modal-overlay" id="modalChecklist">
+  <div class="checklist-modal-box">
+    <div class="checklist-modal-header">
+      <h3>&#9989; Pauta de Supervisión — Ficha <span id="chkFichaNum">—</span></h3>
+      <button onclick="cerrarModalChecklist()" style="background:transparent; border:none; color:white; font-size:22px; cursor:pointer; font-weight:bold;">×</button>
+    </div>
+    <div class="checklist-modal-body">
+      <!-- Encabezado de etapa -->
+      <div id="wfEtapaHeader" style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <span id="wfEtapaBadge" style="font-size:10px; font-weight:800; padding:4px 10px; border-radius:10px; letter-spacing:.5px;">ETAPA</span>
+        <span id="wfEtapaTitulo" style="font-size:13px; font-weight:700; color:#212529;">—</span>
+      </div>
+
+      <!-- Barra de pasos (workflow) -->
+      <div id="wfStepBar" style="display:flex; align-items:center; gap:6px; margin-bottom:14px; flex-wrap:wrap;"></div>
+
+      <!-- Datos de la ficha (siempre visible como contexto) -->
+      <div class="checklist-meta" style="margin-bottom:12px;">
+        <div><span>Paciente: </span><b id="chkPaciente">—</b></div>
+        <div><span>IT: </span><b id="chkIT">—</b></div>
+        <div><span>Fecha Digitalización: </span><b id="chkFechaDigit">—</b></div>
+        <div><span>Mes Supervisión: </span><b id="chkMesSup">—</b></div>
+      </div>
+
+      <!-- Paso: Intro UAP (autodeclaración) -->
+      <div class="wf-step" data-step="introUAP">
+        <div style="background:#e7f1ff; border-left:4px solid #0d6efd; border-radius:6px; padding:14px 16px;">
+          <div style="font-size:12px; font-weight:800; color:#0d6efd; text-transform:uppercase; margin-bottom:6px;">Etapa 1 · Responsable UAP</div>
+          <div style="font-size:12px; color:#212529; line-height:1.5; margin-bottom:12px;">
+            El <b>Responsable UAP</b> autodeclara el cumplimiento de las actividades de digitalización, indexación, archivo y registro en SIC ejecutadas sobre esta ficha.
+          </div>
+          <label style="font-size:11px; font-weight:800; color:#555; display:block; margin-bottom:4px;">Responsable UAP <span style="color:#dc3545">*</span></label>
+          <input type="text" id="chkRespUAP" placeholder="Nombre y apellido del responsable UAP..." style="width:100%; padding:6px 10px; font-size:12px; border:1px solid #ced4da; border-radius:4px;">
+        </div>
+      </div>
+
+      <!-- Paso: Intro Supervisor -->
+      <div class="wf-step" data-step="introSUP" style="display:none;">
+        <div style="background:#fdecec; border-left:4px solid var(--tel-red); border-radius:6px; padding:14px 16px;">
+          <div style="font-size:12px; font-weight:800; color:var(--tel-red-dark); text-transform:uppercase; margin-bottom:6px;">Etapa 2 · Supervisor</div>
+          <div style="font-size:12px; color:#212529; line-height:1.5; margin-bottom:12px;">
+            Autodeclaración UAP finalizada. A partir de aquí, el <b>Supervisor</b> verifica en terreno la calidad de la digitalización, la legibilidad del archivo y la destrucción del SFD físico.
+          </div>
+          <label style="font-size:11px; font-weight:800; color:#555; display:block; margin-bottom:4px;">Responsable Supervisión <span style="color:#dc3545">*</span></label>
+          <input type="text" id="chkRespSup" placeholder="Nombre y apellido del supervisor..." style="width:100%; padding:6px 10px; font-size:12px; border:1px solid #ced4da; border-radius:4px;">
+        </div>
+      </div>
+
+      <!-- Paso: Criterio individual -->
+      <div class="wf-step" data-step="criterio" style="display:none;">
+        <div id="wfCritBox" style="background:#f1f3f5; border-radius:6px; padding:16px 18px; border-left:4px solid #adb5bd;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:10px; font-weight:800; text-transform:uppercase;" id="wfCritTag">Criterio</div>
+            <span id="wfCritRol" style="font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px;">ROL</span>
+          </div>
+          <div id="wfCritTexto" style="font-size:14px; color:#212529; line-height:1.5; margin-bottom:16px;">—</div>
+          <div class="check-btns" style="justify-content:center; gap:10px;">
+            <span class="check-si" id="wfBtnSi" onclick="wfResponder(true)" style="padding:8px 24px; font-size:13px;">Sí</span>
+            <span class="check-no" id="wfBtnNo" onclick="wfResponder(false)" style="padding:8px 24px; font-size:13px;">No</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso: Observaciones y resumen -->
+      <div class="wf-step" data-step="obs" style="display:none;">
+        <div class="checklist-meta" style="grid-template-columns:1fr 1fr 1fr;">
+          <div><span>Respondidos: </span><b id="wfResResp">0 / 9</b></div>
+          <div><span>Sí: </span><b id="wfResSi" style="color:#28a745;">0</b></div>
+          <div><span>No: </span><b id="wfResNo" style="color:#dc3545;">0</b></div>
+        </div>
+        <div class="sup-obs-area">
+          <label>Observaciones del Supervisor</label>
+          <textarea id="chkObservaciones" rows="4" placeholder="Ingrese observaciones si algún criterio no se cumplió..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="checklist-footer">
+      <div class="sup-progress">Paso <b id="wfPasoActual">1</b> de <b id="wfPasoTotal">12</b> · Criterios: <b id="chkProgreso">0 / 9</b></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" onclick="cerrarModalChecklist()">Cancelar</button>
+        <button class="btn btn-secondary" id="wfBtnAnterior" onclick="wfAnterior()" disabled>← Anterior</button>
+        <button class="btn btn-primary" id="wfBtnSiguiente" onclick="wfSiguiente()">Siguiente →</button>
+        <button class="btn btn-primary" id="btnGuardarChecklist" onclick="guardarChecklist()" style="display:none;">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-  // VARIABLES Y DATOS
+  // ===== MÓDULO SUPERVISIÓN DIGITALIZACIÓN =====
+
+  // Criterios de la pauta con el ROL responsable de cada uno.
+  // UAP = actividad operativa (autodeclaración). SUP = verificación del supervisor.
+  const CRITERIOS_SUP = [
+    { rol:'UAP', txt:'SFD digitalizado en formato PDF único (resolución mín. 300 dpi, escala de grises)' },
+    { rol:'UAP', txt:'SFD indexado en N° de ficha clínica y carpeta correspondiente en RDD' },
+    { rol:'UAP', txt:'Archivo PDF eliminado de correo electrónico, escritorio PC y papelera de reciclaje' },
+    { rol:'UAP', txt:'SFD digitalizado almacenado en caja "SFD digitalizados"' },
+    { rol:'SUP', txt:'SFD digitalizado mantiene orden definido' },
+    { rol:'SUP', txt:'SFD digitalizado es legible' },
+    { rol:'UAP', txt:'Se deja registro de digitalización e indexación en SIC' },
+    { rol:'UAP', txt:'Se deja registro de eliminación del SFD en SIC' },
+    { rol:'SUP', txt:'Se verifica eliminación/destrucción del SFD físico correspondiente' }
+  ];
+
+  // Base de supervisiones: se puebla automáticamente cuando se digitaliza
+  let dbSupervision = [];
+  let _chkFichaActual = null;
+  let _uapMode = false; // true si estamos en modo UAP, false si en modo Supervisor
+
+  function _mesActual() {
+    const n = new Date();
+    return String(n.getMonth()+1).padStart(2,'0');
+  }
+
+  function _labelMes(mm) {
+    const nombres = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return nombres[parseInt(mm,10)] || mm;
+  }
+
+  // Crea un registro de supervisión pendiente al digitalizar
+  function crearRegistroSupervision(ficha, paciente, it, fechaDigit, profesional) {
+    const mes = _mesActual();
+    const anio = new Date().getFullYear();
+    const existe = dbSupervision.find(s => s.ficha === ficha);
+    if (existe) return; // ya tiene registro
+    dbSupervision.push({
+      ficha, paciente, it,
+      fechaDigit: fechaDigit || new Date().toLocaleDateString('es-CL'),
+      mes, anio,
+      profesional,
+      respUAP: '',
+      respSup: '',
+      criterios: Array(9).fill(null), // null = sin responder, true = Sí, false = No
+      observaciones: '',
+      estado: 'PENDIENTE', // PENDIENTE | COMPLETA | CON_OBSERVACIONES
+      fechaSup: null
+    });
+  }
+
+  // ===== Workflow pauta (dos etapas: UAP → Supervisor) =====
+  // Estructura dinámica: introUAP → crits UAP → introSUP → crits SUP → obs
+  let WF_STEPS = [];
+  let _wfPaso = 0;
+
+  function _buildWfSteps() {
+    const uap = [], sup = [];
+    CRITERIOS_SUP.forEach((c, i) => (c.rol === 'UAP' ? uap : sup).push({ kind:'crit', idx:i }));
+    WF_STEPS = [
+      { kind:'introUAP' },
+      ...uap,
+      { kind:'introSUP' },
+      ...sup,
+      { kind:'obs' }
+    ];
+  }
+
+  function abrirChecklist(ficha) {
+    const reg = dbSupervision.find(s => s.ficha === ficha);
+    if (!reg) return;
+    if (!reg.respUAP) { alert('El Responsable UAP debe completar su pauta primero.'); return; }
+    _chkFichaActual = ficha;
+    _buildWfSteps();
+    document.getElementById('chkFichaNum').textContent  = ficha;
+    document.getElementById('chkPaciente').textContent  = reg.paciente;
+    document.getElementById('chkIT').textContent        = reg.it;
+    document.getElementById('chkFechaDigit').textContent = reg.fechaDigit;
+    document.getElementById('chkMesSup').textContent    = _labelMes(reg.mes) + ' ' + reg.anio;
+    document.getElementById('chkRespUAP').value         = reg.respUAP || '';
+    document.getElementById('chkRespSup').value         = reg.respSup || '';
+    document.getElementById('chkObservaciones').value   = reg.observaciones || '';
+    document.getElementById('wfPasoTotal').textContent  = WF_STEPS.length;
+    _wfPaso = 0;
+    _uapMode = false; // Modo Supervisor
+    wfRender();
+    document.getElementById('modalChecklist').style.display = 'flex';
+  }
+
+  function _etapaDePaso(i) {
+    // Todos los pasos hasta (incluido) el último crit UAP son etapa UAP; luego SUP.
+    const s = WF_STEPS[i];
+    if (!s) return 'UAP';
+    if (s.kind === 'introUAP') return 'UAP';
+    if (s.kind === 'introSUP' || s.kind === 'obs') return 'SUP';
+    return CRITERIOS_SUP[s.idx].rol;
+  }
+
+  function wfRender() {
+    const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
+    if (!reg) return;
+
+    // Encabezado de etapa
+    const etapa = _etapaDePaso(_wfPaso);
+    const badge = document.getElementById('wfEtapaBadge');
+    const titulo = document.getElementById('wfEtapaTitulo');
+    if (etapa === 'UAP') {
+      badge.textContent = 'ETAPA 1 · UAP';
+      badge.style.background = '#e7f1ff'; badge.style.color = '#0d6efd'; badge.style.border = '1px solid #b6d4fe';
+      titulo.textContent = 'Autodeclaración del Responsable UAP';
+    } else {
+      badge.textContent = 'ETAPA 2 · SUPERVISOR';
+      badge.style.background = '#fdecec'; badge.style.color = 'var(--tel-red-dark)'; badge.style.border = '1px solid #f5c2c7';
+      titulo.textContent = 'Verificación del Supervisor';
+    }
+
+    // Barra de pasos
+    const bar = document.getElementById('wfStepBar');
+    let html = '';
+    WF_STEPS.forEach((s, i) => {
+      let cls = 'wf-dot';
+      let label = '•';
+      let title = 'Paso ' + (i+1);
+      if (s.kind === 'introUAP') { label = 'U'; title = 'Inicio UAP'; if (reg.respUAP) cls += ' done'; }
+      else if (s.kind === 'introSUP') { label = 'S'; title = 'Inicio Supervisor'; if (reg.respSup) cls += ' done'; }
+      else if (s.kind === 'obs') { label = 'F'; title = 'Cierre / Observaciones'; if (_wfPaso >= i) cls += ' done'; }
+      else if (s.kind === 'crit') {
+        label = String(s.idx + 1);
+        title = 'Criterio ' + (s.idx+1) + ' (' + CRITERIOS_SUP[s.idx].rol + ')';
+        const v = reg.criterios[s.idx];
+        if (v === true) cls += ' done';
+        else if (v === false) cls += ' no';
+      }
+      if (i === _wfPaso) cls += ' active';
+      // Separador entre etapa UAP y SUP
+      if (i > 0 && WF_STEPS[i].kind === 'introSUP') {
+        html += '<div class="wf-line" style="flex:0 0 20px; background:#adb5bd;"></div>';
+      } else if (i > 0) {
+        html += '<div class="wf-line"></div>';
+      }
+      html += `<div class="${cls}" title="${title}">${label}</div>`;
+    });
+    bar.innerHTML = html;
+
+    // Mostrar sólo el step activo
+    document.querySelectorAll('.wf-step').forEach(el => el.style.display = 'none');
+    const step = WF_STEPS[_wfPaso];
+    if (step.kind === 'introUAP') {
+      document.querySelector('.wf-step[data-step="introUAP"]').style.display = '';
+    } else if (step.kind === 'introSUP') {
+      document.querySelector('.wf-step[data-step="introSUP"]').style.display = '';
+    } else if (step.kind === 'crit') {
+      const idx = step.idx;
+      const crit = CRITERIOS_SUP[idx];
+      document.querySelector('.wf-step[data-step="criterio"]').style.display = '';
+      document.getElementById('wfCritTag').textContent = 'Criterio ' + (idx+1) + ' de 9';
+      document.getElementById('wfCritTexto').textContent = crit.txt;
+      const rol = document.getElementById('wfCritRol');
+      const box = document.getElementById('wfCritBox');
+      if (crit.rol === 'UAP') {
+        rol.textContent = 'UAP';
+        rol.style.background = '#0d6efd'; rol.style.color = '#fff';
+        box.style.borderLeftColor = '#0d6efd';
+      } else {
+        rol.textContent = 'SUPERVISOR';
+        rol.style.background = 'var(--tel-red)'; rol.style.color = '#fff';
+        box.style.borderLeftColor = 'var(--tel-red)';
+      }
+      const v = reg.criterios[idx];
+      document.getElementById('wfBtnSi').classList.toggle('sel', v === true);
+      document.getElementById('wfBtnNo').classList.toggle('sel', v === false);
+    } else if (step.kind === 'obs') {
+      document.querySelector('.wf-step[data-step="obs"]').style.display = '';
+      const resp = reg.criterios.filter(c => c !== null).length;
+      const nSi  = reg.criterios.filter(c => c === true).length;
+      const nNo  = reg.criterios.filter(c => c === false).length;
+      document.getElementById('wfResResp').textContent = resp + ' / 9';
+      document.getElementById('wfResSi').textContent = nSi;
+      document.getElementById('wfResNo').textContent = nNo;
+    }
+
+    // Footer
+    document.getElementById('wfPasoActual').textContent = _wfPaso + 1;
+    actualizarProgreso(reg.criterios);
+    document.getElementById('wfBtnAnterior').disabled = (_wfPaso === 0);
+    const enFinal = (_wfPaso === WF_STEPS.length - 1);
+    document.getElementById('wfBtnSiguiente').style.display = enFinal ? 'none' : '';
+    document.getElementById('btnGuardarChecklist').style.display = enFinal ? '' : 'none';
+  }
+
+  function wfSiguiente() {
+    if (_uapMode) return wfSiguienteUAP();
+    const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
+    const step = WF_STEPS[_wfPaso];
+    if (step.kind === 'introUAP') {
+      const v = document.getElementById('chkRespUAP').value.trim();
+      if (!v) { alert('Ingrese el Responsable UAP para continuar.'); return; }
+      if (reg) reg.respUAP = v;
+    } else if (step.kind === 'introSUP') {
+      const v = document.getElementById('chkRespSup').value.trim();
+      if (!v) { alert('Ingrese el Responsable de Supervisión para continuar.'); return; }
+      if (reg) reg.respSup = v;
+    }
+    if (_wfPaso < WF_STEPS.length - 1) { _wfPaso++; wfRender(); }
+  }
+
+  function wfAnterior() {
+    if (_uapMode) return wfAnteriorUAP();
+    if (_wfPaso > 0) { _wfPaso--; wfRender(); }
+  }
+
+  function wfResponder(valor) {
+    if (_uapMode) return wfResponderUAP(valor);
+    const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
+    const step = WF_STEPS[_wfPaso];
+    if (!reg || !step || step.kind !== 'crit') return;
+    reg.criterios[step.idx] = valor;
+    setTimeout(() => { if (_wfPaso < WF_STEPS.length - 1) { _wfPaso++; wfRender(); } else { wfRender(); } }, 180);
+    wfRender();
+  }
+
+  function actualizarProgreso(criterios) {
+    const respondidos = criterios.filter(c => c !== null).length;
+    document.getElementById('chkProgreso').textContent = respondidos + ' / 9';
+  }
+
+
+  function guardarChecklist() {
+    if (_uapMode) return guardarChecklistUAP();
+    const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
+    if (!reg) return;
+    reg.respUAP        = document.getElementById('chkRespUAP').value.trim();
+    reg.respSup        = document.getElementById('chkRespSup').value.trim();
+    reg.observaciones  = document.getElementById('chkObservaciones').value.trim();
+    reg.fechaSup       = new Date().toLocaleDateString('es-CL');
+    const respondidos  = reg.criterios.filter(c => c !== null).length;
+    const hayNo        = reg.criterios.some(c => c === false);
+    if (respondidos < 9) {
+      if (!confirm('Aún quedan ' + (9-respondidos) + ' criterio(s) sin responder. ¿Guardar de todos modos?')) return;
+    }
+    if (respondidos === 9 && !hayNo) {
+      reg.estado = 'COMPLETA';
+    } else if (hayNo || reg.observaciones) {
+      reg.estado = 'CON_OBSERVACIONES';
+    } else {
+      reg.estado = 'PENDIENTE';
+    }
+    registrarAuditoria('DIGITALIZACIÓN', reg.ficha, reg.paciente, reg.it, {
+      profesional: reg.profesional,
+      motivo: 'Supervisión registrada',
+      detalle: 'Pauta: ' + reg.estado + (reg.observaciones ? ' — Obs: ' + reg.observaciones.substring(0,60) : '')
+    });
+    cerrarModalChecklist();
+    renderSupervision();
+  }
+
+  function cerrarModalChecklist() {
+    document.getElementById('modalChecklist').style.display = 'none';
+    _chkFichaActual = null;
+  }
+
+  // ===== MÓDULO PAUTA UAP =====
+  function renderSupervisionUAP() {
+    const filtMes    = document.getElementById('supFiltroMesUAP')?.value    || 'TODOS';
+    const filtIT     = document.getElementById('supFiltroITUAP')?.value     || 'TODOS';
+    const filtEstado = document.getElementById('supFiltroEstadoUAP')?.value || 'TODOS';
+    const busca      = (document.getElementById('supFiltroBuscaUAP')?.value || '').toLowerCase();
+    const itAdmin    = currentAdminMode !== 'TODOS' ? currentAdminMode : null;
+
+    const lista = dbSupervision.filter(s => {
+      if (itAdmin && s.it !== itAdmin) return false;
+      if (filtMes    !== 'TODOS' && s.mes !== filtMes) return false;
+      if (filtIT     !== 'TODOS' && s.it  !== filtIT)  return false;
+      if (busca && !s.ficha.includes(busca) && !s.paciente.toLowerCase().includes(busca)) return false;
+      // Mostrar todos los estados pero filtrar si el usuario lo pide
+      if (filtEstado !== 'TODOS') {
+        if (filtEstado === 'PENDIENTE' && (s.respUAP && s.criterios.some(c => c !== null))) return false;
+        if (filtEstado === 'UAP_COMPLETA' && !s.respUAP) return false;
+        if (filtEstado === 'COMPLETA' && s.estado !== 'COMPLETA') return false;
+      }
+      return true;
+    });
+
+    // Resumen cards para UAP
+    const tot   = dbSupervision.filter(s => !itAdmin || s.it === itAdmin).length;
+    const pend  = dbSupervision.filter(s => (!itAdmin||s.it===itAdmin) && !s.respUAP).length;
+    const comp  = dbSupervision.filter(s => (!itAdmin||s.it===itAdmin) && s.respUAP).length;
+    document.getElementById('supResumenCardsUAP').innerHTML = `
+      <div class="sup-card sup-card-tot"><div class="ec-num">${tot}</div><div class="ec-lbl">Total Fichas</div></div>
+      <div class="sup-card sup-card-pend"><div class="ec-num">${pend}</div><div class="ec-lbl">Pendientes</div></div>
+      <div class="sup-card sup-card-ok"><div class="ec-num">${comp}</div><div class="ec-lbl">UAP Completadas</div></div>
+    `;
+
+    const tbody = document.getElementById('bodySupervisionUAP');
+    if (!tbody) return;
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#888;">No hay registros de pauta UAP para los filtros seleccionados.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(s => {
+      const critUAPIndices = [];
+      CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
+      const respondidosUAP = critUAPIndices.filter(i => s.criterios[i] !== null).length;
+      let badgeHtml = '';
+      if (s.respUAP) badgeHtml = '<span class="sup-completa-badge">✓ COMPLETA</span>';
+      else           badgeHtml = '<span class="sup-pendiente-badge">⏳ PENDIENTE</span>';
+      return `<tr>
+        <td><b>${s.ficha}</b></td>
+        <td>${s.it}</td>
+        <td>${s.paciente}</td>
+        <td style="font-size:11px;">${s.fechaDigit}</td>
+        <td style="font-size:11px;">${s.respUAP || '<span style="color:#aaa;">—</span>'}</td>
+        <td>${badgeHtml}</td>
+        <td style="text-align:center; font-size:12px; font-weight:700; color:${respondidosUAP<6?'#856404':'#155724'}">${respondidosUAP}/6</td>
+        <td><button class="btn btn-primary" style="font-size:10px; padding:5px 10px;" onclick="abrirChecklistUAP('${s.ficha}')">
+          ${s.respUAP?'Ver / Editar':'Llenar Pauta'}
+        </button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function abrirChecklistUAP(ficha) {
+    const reg = dbSupervision.find(s => s.ficha === ficha);
+    if (!reg) return;
+    _chkFichaActual = ficha;
+    document.getElementById('chkFichaNum').textContent  = ficha;
+    document.getElementById('chkPaciente').textContent  = reg.paciente;
+    document.getElementById('chkIT').textContent        = reg.it;
+    document.getElementById('chkFechaDigit').textContent = reg.fechaDigit;
+    document.getElementById('chkMesSup').textContent    = _labelMes(reg.mes) + ' ' + reg.anio;
+    document.getElementById('chkRespUAP').value         = reg.respUAP || '';
+    document.getElementById('chkRespSup').value         = reg.respSup || '';
+    document.getElementById('chkObservaciones').value   = reg.observaciones || '';
+    
+    // Calcular pasos UAP: intro + criterios UAP
+    const critUAPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
+    const totalPasosUAP = 1 + critUAPIndices.length; // intro + criterios
+    document.getElementById('wfPasoTotal').textContent = totalPasosUAP;
+    
+    _wfPaso = 0;
+    _uapMode = true;
+    wfRenderUAP();
+    document.getElementById('modalChecklist').style.display = 'flex';
+  }
+
+  function wfRenderUAP() {
+    const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
+    if (!reg) return;
+
+    // Encabezado - solo mostrar ETAPA 1 UAP
+    const badge = document.getElementById('wfEtapaBadge');
+    const titulo = document.getElementById('wfEtapaTitulo');
+    badge.textContent = 'ETAPA 1 · UAP';
+    badge.style.background = '#e7f1ff'; badge.style.color = '#0d6efd'; badge.style.border = '1px solid #b6d4fe';
+    titulo.textContent = 'Autodeclaración del Responsable UAP';
+
+    // Barra de pasos - solo criterios UAP
+    const bar = document.getElementById('wfStepBar');
+    const critUAPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
+    
+    let html = '';
+    // Intro UAP
+    let cls = 'wf-dot';
+    if (reg.respUAP) cls += ' done';
+    if (_wfPaso === 0) cls += ' active';
+    html += `<div class="${cls}" title="Inicio UAP">U</div>`;
+    html += '<div class="wf-line"></div>';
+    
+    // Criterios UAP
+    critUAPIndices.forEach((idx, posLocal) => {
+      const v = reg.criterios[idx];
+      cls = 'wf-dot';
+      if (v === true) cls += ' done';
+      else if (v === false) cls += ' no';
+      if (_wfPaso === (posLocal + 1)) cls += ' active'; // +1 porque intro es paso 0
+      html += `<div class="${cls}" title="Criterio UAP ${posLocal+1}">${String(posLocal + 1)}</div>`;
+      if (posLocal < critUAPIndices.length - 1) html += '<div class="wf-line"></div>';
+    });
+    bar.innerHTML = html;
+
+    // Mostrar solo el step activo
+    document.querySelectorAll('.wf-step').forEach(el => el.style.display = 'none');
+    
+    if (_wfPaso === 0) {
+      // Intro UAP
+      document.querySelector('.wf-step[data-step="introUAP"]').style.display = '';
+    } else if (_wfPaso > 0 && _wfPaso <= critUAPIndices.length) {
+      // Criterio UAP
+      const idx = critUAPIndices[_wfPaso - 1];
+      const crit = CRITERIOS_SUP[idx];
+      document.querySelector('.wf-step[data-step="criterio"]').style.display = '';
+      document.getElementById('wfCritTag').textContent = 'Criterio ' + (_wfPaso) + ' de 6 (UAP)';
+      document.getElementById('wfCritTexto').textContent = crit.txt;
+      const rol = document.getElementById('wfCritRol');
+      const box = document.getElementById('wfCritBox');
+      rol.textContent = 'UAP';
+      rol.style.background = '#0d6efd'; rol.style.color = '#fff';
+      box.style.borderLeftColor = '#0d6efd';
+      const v = reg.criterios[idx];
+      document.getElementById('wfBtnSi').classList.toggle('sel', v === true);
+      document.getElementById('wfBtnNo').classList.toggle('sel', v === false);
+    }
+
+    // Footer
+    document.getElementById('wfPasoActual').textContent = _wfPaso + 1;
+    const critUAP = critUAPIndices.map(i => reg.criterios[i]).filter(c => c !== null);
+    document.getElementById('chkProgreso').textContent = critUAP.length + ' / 6';
+    document.getElementById('wfBtnAnterior').disabled = (_wfPaso === 0);
+    const enFinal = (_wfPaso === critUAPIndices.length);
+    document.getElementById('wfBtnSiguiente').style.display = enFinal ? 'none' : '';
+    document.getElementById('btnGuardarChecklist').style.display = enFinal ? '' : 'none';
+  }
+
+  function wfSiguienteUAP() {
+    const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
+    const critUAPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
+    
+    if (_wfPaso === 0) {
+      const v = document.getElementById('chkRespUAP').value.trim();
+      if (!v) { alert('Ingrese el Responsable UAP para continuar.'); return; }
+      if (reg) reg.respUAP = v;
+    }
+    if (_wfPaso < critUAPIndices.length) { 
+      _wfPaso++; 
+      wfRenderUAP(); 
+    }
+  }
+
+  function wfAnteriorUAP() {
+    if (_wfPaso > 0) { _wfPaso--; wfRenderUAP(); }
+  }
+
+  function wfResponderUAP(valor) {
+    const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
+    const critUAPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
+    
+    if (!reg || _wfPaso <= 0 || _wfPaso > critUAPIndices.length) return;
+    const idx = critUAPIndices[_wfPaso - 1];
+    reg.criterios[idx] = valor;
+    setTimeout(() => { 
+      if (_wfPaso < critUAPIndices.length) { 
+        _wfPaso++; 
+        wfRenderUAP(); 
+      } else { 
+        wfRenderUAP(); 
+      } 
+    }, 180);
+    wfRenderUAP();
+  }
+
+  function guardarChecklistUAP() {
+    const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
+    if (!reg) return;
+    
+    const respUAP = document.getElementById('chkRespUAP').value.trim();
+    if (!respUAP) { alert('Ingrese el Responsable UAP para guardar.'); return; }
+    
+    reg.respUAP = respUAP;
+    
+    // Contar criterios UAP completados
+    const critUAPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
+    const respondidos = critUAPIndices.filter(i => reg.criterios[i] !== null).length;
+    
+    if (respondidos < 6) {
+      if (!confirm('Aún quedan ' + (6-respondidos) + ' criterio(s) sin responder. ¿Guardar de todos modos?')) return;
+    }
+    
+    registrarAuditoria('DIGITALIZACIÓN', reg.ficha, reg.paciente, reg.it, {
+      profesional: reg.profesional,
+      motivo: 'Pauta UAP completada',
+      detalle: 'Responsable: ' + respUAP + ' — Criterios: ' + respondidos + '/6'
+    });
+    
+    cerrarModalChecklist();
+    renderSupervisionUAP();
+  }
+
+  function exportarSupervisionUAPCSV() {
+    const critUAPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
+    
+    const filas = [['N° Ficha','IT','Paciente','Fecha Digit.','Mes','Resp. UAP',
+      ...critUAPIndices.map((i, pos) => 'Criterio ' + (pos+1))]];
+    
+    dbSupervision.forEach(s => {
+      const itAdmin = currentAdminMode !== 'TODOS' ? currentAdminMode : null;
+      if (itAdmin && s.it !== itAdmin) return;
+      if (!s.respUAP) return; // Solo exportar que tienen UAP completado
+      filas.push([
+        s.ficha, s.it, s.paciente, s.fechaDigit, _labelMes(s.mes)+' '+s.anio, s.respUAP,
+        ...critUAPIndices.map(i => s.criterios[i] === null ? '' : (s.criterios[i] ? 'Sí' : 'No'))
+      ]);
+    });
+    const csv = filas.map(r => r.map(c => '"'+String(c||'').replace(/"/g,'""')+'"').join(';')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='pauta_uap.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+  // ===== FIN MÓDULO PAUTA UAP =====
+
+  function renderSupervision() {
+    const filtMes    = document.getElementById('supFiltroMes')?.value    || 'TODOS';
+    const filtIT     = document.getElementById('supFiltroIT')?.value     || 'TODOS';
+    const filtEstado = document.getElementById('supFiltroEstado')?.value || 'TODOS';
+    const busca      = (document.getElementById('supFiltroBusca')?.value || '').toLowerCase();
+    const itAdmin    = currentAdminMode !== 'TODOS' ? currentAdminMode : null;
+
+    const lista = dbSupervision.filter(s => {
+      if (itAdmin && s.it !== itAdmin) return false;
+      if (filtMes    !== 'TODOS' && s.mes !== filtMes) return false;
+      if (filtIT     !== 'TODOS' && s.it  !== filtIT)  return false;
+      if (filtEstado !== 'TODOS') {
+        if (filtEstado === 'UAP_COMPLETA' && !s.respUAP) return false;
+        if (filtEstado === 'COMPLETA' && s.estado !== 'COMPLETA') return false;
+        if (filtEstado === 'CON_OBSERVACIONES' && s.estado !== 'CON_OBSERVACIONES') return false;
+      }
+      if (busca && !s.ficha.includes(busca) && !s.paciente.toLowerCase().includes(busca)) return false;
+      return true;
+    });
+
+    // Resumen cards - ahora mostrando etapas completas
+    const tot   = dbSupervision.filter(s => !itAdmin || s.it === itAdmin).length;
+    const uapComp  = dbSupervision.filter(s => (!itAdmin||s.it===itAdmin) && s.respUAP).length;
+    const ok    = dbSupervision.filter(s => (!itAdmin||s.it===itAdmin) && s.estado==='COMPLETA').length;
+    const obs   = dbSupervision.filter(s => (!itAdmin||s.it===itAdmin) && s.estado==='CON_OBSERVACIONES').length;
+    document.getElementById('supResumenCards').innerHTML = `
+      <div class="sup-card sup-card-tot"><div class="ec-num">${tot}</div><div class="ec-lbl">Total Fichas</div></div>
+      <div class="sup-card sup-card-pend"><div class="ec-num">${uapComp}</div><div class="ec-lbl">UAP Completadas</div></div>
+      <div class="sup-card sup-card-ok"><div class="ec-num">${ok}</div><div class="ec-lbl">Supervisión Completa</div></div>
+      <div class="sup-card sup-card-obs"><div class="ec-num">${obs}</div><div class="ec-lbl">Con Observaciones</div></div>
+    `;
+
+    const tbody = document.getElementById('bodySupervision');
+    if (!tbody) return;
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#888;">No hay registros de supervisión para los filtros seleccionados.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(s => {
+      const respondidos = s.criterios.filter(c => c !== null).length;
+      const hayNo = s.criterios.some(c => c === false);
+      let badgeEstadoUAP = '';
+      if (s.respUAP) badgeEstadoUAP = '<span class="sup-completa-badge">✓ Completada</span>';
+      else           badgeEstadoUAP = '<span class="sup-pendiente-badge">⏳ Pendiente</span>';
+      let badgeHtml = '';
+      if (s.estado === 'COMPLETA')          badgeHtml = '<span class="sup-completa-badge">✓ COMPLETA</span>';
+      else if (s.estado === 'CON_OBSERVACIONES') badgeHtml = '<span class="sup-obs-badge">⚠ CON OBS.</span>';
+      else                                  badgeHtml = '<span class="sup-pendiente-badge">⏳ PENDIENTE</span>';
+      return `<tr>
+        <td><b>${s.ficha}</b></td>
+        <td>${s.it}</td>
+        <td>${s.paciente}</td>
+        <td style="font-size:11px;">${s.fechaDigit}</td>
+        <td style="font-size:11px;">${s.respUAP || '<span style="color:#aaa;">—</span>'}</td>
+        <td>${badgeEstadoUAP}</td>
+        <td style="font-size:11px;">${s.respSup || '<span style="color:#aaa;">—</span>'}</td>
+        <td style="text-align:center; font-size:12px; font-weight:700; color:${respondidos<9?'#856404':'#155724'}">${respondidos}/9 ${hayNo?'<span style="color:#dc3545;">⚠</span>':''}</td>
+        <td>${badgeHtml}</td>
+        <td><button class="btn btn-primary" style="font-size:10px; padding:5px 10px;" onclick="abrirChecklist('${s.ficha}')">
+          ${s.respUAP ? 'Supervisar' : 'Esperar UAP'}
+        </button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function exportarSupervisionCSV() {
+    const filas = [['N° Ficha','IT','Paciente','Fecha Digit.','Mes','Resp. UAP','Resp. Supervisión',
+      ...CRITERIOS_SUP.map((_,i) => 'Criterio '+(i+1)),
+      'Observaciones','Estado','Fecha Supervisión']];
+    dbSupervision.forEach(s => {
+      const itAdmin = currentAdminMode !== 'TODOS' ? currentAdminMode : null;
+      if (itAdmin && s.it !== itAdmin) return;
+      filas.push([
+        s.ficha, s.it, s.paciente, s.fechaDigit, _labelMes(s.mes)+' '+s.anio,
+        s.respUAP, s.respSup,
+        ...s.criterios.map(c => c === null ? '' : (c ? 'Sí' : 'No')),
+        s.observaciones, s.estado, s.fechaSup || ''
+      ]);
+    });
+    const csv = filas.map(r => r.map(c => '"'+String(c||'').replace(/"/g,'""')+'"').join(';')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='supervision_digitalizacion.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   let currentAdminMode = 'TODOS'; 
 
   const dbPacientes = {
@@ -794,12 +1589,6 @@
     document.getElementById('datosAPI').style.display = 'none';
     document.getElementById('motivoBox').style.display = cfg.motivo ? 'block' : 'none';
     const mo = document.getElementById('motivoOperacion'); if (mo) mo.value = '';
-    const inputActa = document.getElementById('inputActaDestruccion');
-    if (inputActa) inputActa.value = '';
-    const nombreActa = document.getElementById('nombreActaDestruccion');
-    if (nombreActa) nombreActa.innerText = 'Ningún archivo adjunto';
-    const btnVer = document.getElementById('btnVerActa'); if (btnVer) btnVer.style.display = 'none';
-    if (_actaURL) { URL.revokeObjectURL(_actaURL); _actaURL = null; _actaTipo = null; }
     const btnFin = document.getElementById('btnFinalizar');
     btnFin.innerText = (modo === 'DESTRUCCION') ? 'Confirmar Baja Documental' : 'Confirmar Envío a Scanner';
     renderTablaCustodio();
@@ -857,7 +1646,7 @@
     const esDestruccion = modoActualCustodio === 'DESTRUCCION';
 
     btn.disabled = !tieneFichas;
-    btn.title = tieneFichas ? (esDestruccion ? 'Continuar para adjuntar acta' : 'Confirmar') : 'Debe seleccionar al menos una ficha';
+    btn.title = tieneFichas ? 'Confirmar' : 'Debe seleccionar al menos una ficha';
     btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
     btn.style.opacity = btn.disabled ? '0.55' : '1';
 
@@ -890,10 +1679,6 @@
       return alert('Debe indicar el motivo / observación.');
     }
     if (modoActualCustodio === 'DESTRUCCION') {
-      const actaFile = document.getElementById('inputActaDestruccion');
-      if (!actaFile || !actaFile.files || !actaFile.files[0]) {
-        return alert('Debe adjuntar el Acta de Autorización de Baja antes de confirmar.');
-      }
       if (!confirm(`¿Confirma la BAJA DOCUMENTAL de ${carritoCustodio.length} ficha(s)? Esta acción es irreversible.`)) return;
     }
     const hoy = new Date().toLocaleDateString('es-CL');
@@ -1117,88 +1902,11 @@
     renderPasivas();
     renderTablaCustodio();
     renderEstadoFichas();
+    renderSupervisionUAP();
+    renderSupervision();
     const b = document.getElementById('btnAccScanner');
     if (b) b.style.outline = '3px solid #212529';
   };
-
-  // ===== Acta de Autorización de Baja (adjunto inline en panel) =====
-  let _actaURL = null;
-  let _actaTipo = null;
-  function onSeleccionActa(input) {
-    const f = input.files && input.files[0];
-    const lbl = document.getElementById('nombreActaDestruccion');
-    const btnVer = document.getElementById('btnVerActa');
-    const btnConf = document.getElementById('btnConfirmarBajaModal');
-    const msgErr = document.getElementById('msgActaError');
-    if (_actaURL) { URL.revokeObjectURL(_actaURL); _actaURL = null; }
-    if (msgErr) msgErr.innerText = '';
-    let actaOk = false;
-    if (f) {
-      const tiposOk = ['application/pdf','image/jpeg','image/jpg','image/png'];
-      if (!tiposOk.includes(f.type)) {
-        if (msgErr) msgErr.innerText = 'Formato no permitido. Use PDF, JPG o PNG.';
-        lbl.innerText = 'Archivo rechazado';
-        btnVer.style.display = 'none';
-      } else if (f.size > 10*1024*1024) {
-        if (msgErr) msgErr.innerText = 'El acta no puede superar 10 MB.';
-        lbl.innerText = 'Archivo rechazado';
-        btnVer.style.display = 'none';
-      } else {
-        lbl.innerText = 'Adjunto: ' + f.name;
-        _actaURL = URL.createObjectURL(f);
-        _actaTipo = f.type;
-        btnVer.style.display = 'inline-block';
-        actaOk = true;
-      }
-    } else {
-      lbl.innerText = 'Ningún archivo adjunto';
-      btnVer.style.display = 'none';
-    }
-    if (btnConf) {
-      btnConf.disabled = !actaOk;
-      btnConf.style.cursor = actaOk ? 'pointer' : 'not-allowed';
-      btnConf.style.opacity = actaOk ? '1' : '0.55';
-    }
-  }
-  function iniciarConfirmacion() {
-    if (carritoCustodio.length === 0) return;
-    if (modoActualCustodio === 'DESTRUCCION') abrirModalSubirActa();
-    else procesarOperacion();
-  }
-  function abrirModalSubirActa() {
-    const inp = document.getElementById('inputActaDestruccion'); if (inp) inp.value = '';
-    const lbl = document.getElementById('nombreActaDestruccion'); if (lbl) lbl.innerText = 'Ningún archivo adjunto';
-    const btnVer = document.getElementById('btnVerActa'); if (btnVer) btnVer.style.display = 'none';
-    const btnConf = document.getElementById('btnConfirmarBajaModal');
-    if (btnConf) { btnConf.disabled = true; btnConf.style.cursor = 'not-allowed'; btnConf.style.opacity = '0.55'; }
-    const cont = document.getElementById('contFichasBaja'); if (cont) cont.innerText = carritoCustodio.length;
-    const msgErr = document.getElementById('msgActaError'); if (msgErr) msgErr.innerText = '';
-    if (_actaURL) { URL.revokeObjectURL(_actaURL); _actaURL = null; _actaTipo = null; }
-    document.getElementById('modalSubirActa').style.display = 'flex';
-  }
-  function cerrarModalSubirActa() {
-    document.getElementById('modalSubirActa').style.display = 'none';
-  }
-  function confirmarBajaConActa() {
-    const btnConf = document.getElementById('btnConfirmarBajaModal');
-    if (!btnConf || btnConf.disabled) return;
-    cerrarModalSubirActa();
-    procesarOperacion();
-  }
-  function abrirModalActa() {
-    if (!_actaURL) return;
-    const body = document.getElementById('modalActaBody');
-    if (_actaTipo && _actaTipo.startsWith('image/')) {
-      body.innerHTML = '<img src="'+_actaURL+'" style="max-width:100%; max-height:100%; object-fit:contain;">';
-    } else {
-      body.innerHTML = '<iframe src="'+_actaURL+'" style="width:100%; height:100%; border:none; background:#fff;"></iframe>';
-    }
-    document.getElementById('modalActa').style.display = 'flex';
-  }
-  function cerrarModalActa() {
-    document.getElementById('modalActa').style.display = 'none';
-    document.getElementById('modalActaBody').innerHTML = '';
-  }
 
   // ===== MÓDULO AUDITORÍA =====
   // Log centralizado de auditoría: cada acción registrada en el sistema queda aquí también.
@@ -1401,6 +2109,29 @@
     URL.revokeObjectURL(url);
   }
   // ===== FIN MÓDULO AUDITORÍA =====
+
+  // ===== PATCH SUPERVISIÓN (luego de todos los patches de auditoría) =====
+  const _origMcArchSup = mcArchivoSeleccionado;
+  mcArchivoSeleccionado = function() {
+    const idSnap  = selectedId;
+    const solSnap = solicitudes.find(x => x.id === idSnap);
+    _origMcArchSup();
+    if (solSnap) {
+      crearRegistroSupervision(solSnap.ficha, solSnap.paciente, solSnap.it, new Date().toLocaleDateString('es-CL'), solSnap.profesional);
+      renderSupervisionUAP();
+      renderSupervision();
+    }
+  };
+
+  // Inicializar fichas ya digitalizadas en masterData
+  window.addEventListener('load', () => {
+    masterData.filter(d => d.ef === 'DIGITALIZADA').forEach(d => {
+      crearRegistroSupervision(d.f, d.p, d.it, d.ult, '—');
+    });
+    renderSupervisionUAP();
+    renderSupervision();
+  });
+  // ===== FIN PATCH SUPERVISIÓN =====
 </script>
 
 </body>
