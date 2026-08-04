@@ -222,7 +222,7 @@
     </nav>
 
     <div id="sol-form" class="panel active">
-      <h2>Registro de Solicitud Profesional</h2>
+      <h2>Registro de Solicitud de digitalización de soporte físico documental (SFD) </h2>
       <div class="form-grid">
         <div class="form-group"><label>Profesional</label><select id="solProfesion"><option>FISIATRÍA</option><option>KINESIOLOGÍA</option><option>TERAPIA OCUPACIONAL</option><option>FONOAUDIOLOGÍA</option><option>PSICOLOGÍA</option></select></div>
         <div class="form-group"><label>Instituto (IT)</label><select id="solIT"><option value="131">131 - SANTIAGO</option><option value="132">132 - VALPARAÍSO</option><option value="133">133 - CONCEPCIÓN</option><option value="134">134 - ANTOFAGASTA</option></select></div>
@@ -300,7 +300,7 @@
             </div>
             <div class="acciones-grid">
               <button class="btn-accion scanner"     id="btnAccScanner"     onclick="setModo('SCANNER', this)">🖨 Solicitar Scanner / Digitalización</button>
-              <button class="btn-accion destruccion" id="btnAccDestruccion" onclick="setModo('DESTRUCCION', this)">🗑 Solicitar Baja Documental con Acta</button>
+              <button class="btn-accion destruccion" id="btnAccDestruccion" onclick="setModo('DESTRUCCION', this)">🗑 Solicitar Elimnación SFD</button>
             </div>
           </div>
         </div>
@@ -363,7 +363,7 @@
               <option value="ACTIVA">FICHA ACTIVA</option>
               <option value="DIGITALIZADA">FICHA DIGITALIZADA</option>
               <option value="EN_SCANNER">FICHA EN SCANNER</option>
-              <option value="DESTRUIDA">FICHA DESTRUIDA</option>
+              <option value="DESTRUIDA">SFD ELIMINADO</option>
             </select>
           </div>
           <div class="form-group"><label>N° Ficha / Paciente</label>
@@ -412,7 +412,7 @@
             <option value="SOLICITUD">Nueva Solicitud</option>
             <option value="DIGITALIZACIÓN">Digitalización</option>
             <option value="SCANNER">Envío a Scanner</option>
-            <option value="DESTRUCCIÓN">Baja Documental</option>
+            <option value="DESTRUCCIÓN">Eliminacion SFD</option>
           </select>
         </div>
         <div class="form-group">
@@ -505,7 +505,7 @@
         <thead>
           <tr>
             <th>N° Ficha</th><th>IT</th><th>Paciente</th><th>Fecha Digit.</th>
-            <th>Resp. UAP</th><th>Estado</th><th>Criterios Completados</th><th>Acción</th>
+            <th>Resp. UAP</th><th>Estado</th><th>Criterios Completados</th><th>Observaciones</th><th>Acción</th>
           </tr>
         </thead>
         <tbody id="bodySupervisionUAP"></tbody>
@@ -558,7 +558,7 @@
           <tr>
             <th>N° Ficha</th><th>IT</th><th>Paciente</th><th>Fecha Digit.</th>
             <th>Resp. UAP</th><th>Resp. Supervisor</th>
-            <th>Criterios OK</th><th>Estado</th><th>Acción</th>
+            <th>Criterios OK</th><th>Observaciones</th><th>Estado</th><th>Acción</th>
           </tr>
         </thead>
         <tbody id="bodySupervision"></tbody>
@@ -811,7 +811,9 @@
       respSup: '',
       criterios: Array(9).fill(null), // null = sin responder, true = Sí, false = No
       observaciones: '',
+      observacionesUAP: '',
       estado: 'PENDIENTE', // PENDIENTE | COMPLETA | CON_OBSERVACIONES
+      estadoUAP: 'PENDIENTE', // PENDIENTE | COMPLETA | CON_OBSERVACIONES (para Pauta UAP)
       fechaSup: null
     });
   }
@@ -838,7 +840,6 @@
     if (!reg) return;
     if (!reg.respUAP) { alert('El Responsable UAP debe completar su pauta primero.'); return; }
     _chkFichaActual = ficha;
-    _buildWfSteps();
     document.getElementById('chkFichaNum').textContent  = ficha;
     document.getElementById('chkPaciente').textContent  = reg.paciente;
     document.getElementById('chkIT').textContent        = reg.it;
@@ -847,7 +848,13 @@
     document.getElementById('chkRespUAP').value         = reg.respUAP || '';
     document.getElementById('chkRespSup').value         = reg.respSup || '';
     document.getElementById('chkObservaciones').value   = reg.observaciones || '';
-    document.getElementById('wfPasoTotal').textContent  = WF_STEPS.length;
+    
+    // Calcular pasos Supervisor: intro + criterios SUPERVISOR + observaciones
+    const critSUPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'SUP') critSUPIndices.push(i); });
+    const totalPasosSUP = 1 + critSUPIndices.length + 1; // intro + criterios + obs final
+    document.getElementById('wfPasoTotal').textContent = totalPasosSUP;
+    
     _wfPaso = 0;
     _uapMode = false; // Modo Supervisor
     wfRender();
@@ -867,108 +874,103 @@
     const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
     if (!reg) return;
 
-    // Encabezado de etapa
-    const etapa = _etapaDePaso(_wfPaso);
+    // Encabezado
     const badge = document.getElementById('wfEtapaBadge');
     const titulo = document.getElementById('wfEtapaTitulo');
-    if (etapa === 'UAP') {
-      badge.textContent = 'ETAPA 1 · UAP';
-      badge.style.background = '#e7f1ff'; badge.style.color = '#0d6efd'; badge.style.border = '1px solid #b6d4fe';
-      titulo.textContent = 'Autodeclaración del Responsable UAP';
-    } else {
-      badge.textContent = 'ETAPA 2 · SUPERVISOR';
-      badge.style.background = '#fdecec'; badge.style.color = 'var(--tel-red-dark)'; badge.style.border = '1px solid #f5c2c7';
-      titulo.textContent = 'Verificación del Supervisor';
-    }
+    badge.textContent = 'ETAPA 2 · SUPERVISOR';
+    badge.style.background = '#fdecec'; badge.style.color = 'var(--tel-red-dark)'; badge.style.border = '1px solid #f5c2c7';
+    titulo.textContent = 'Verificación del Supervisor';
 
-    // Barra de pasos
+    // Barra de pasos - solo criterios SUPERVISOR (rol='SUP')
     const bar = document.getElementById('wfStepBar');
+    const critSUPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'SUP') critSUPIndices.push(i); });
+    
     let html = '';
-    WF_STEPS.forEach((s, i) => {
-      let cls = 'wf-dot';
-      let label = '•';
-      let title = 'Paso ' + (i+1);
-      if (s.kind === 'introUAP') { label = 'U'; title = 'Inicio UAP'; if (reg.respUAP) cls += ' done'; }
-      else if (s.kind === 'introSUP') { label = 'S'; title = 'Inicio Supervisor'; if (reg.respSup) cls += ' done'; }
-      else if (s.kind === 'obs') { label = 'F'; title = 'Cierre / Observaciones'; if (_wfPaso >= i) cls += ' done'; }
-      else if (s.kind === 'crit') {
-        label = String(s.idx + 1);
-        title = 'Criterio ' + (s.idx+1) + ' (' + CRITERIOS_SUP[s.idx].rol + ')';
-        const v = reg.criterios[s.idx];
-        if (v === true) cls += ' done';
-        else if (v === false) cls += ' no';
-      }
-      if (i === _wfPaso) cls += ' active';
-      // Separador entre etapa UAP y SUP
-      if (i > 0 && WF_STEPS[i].kind === 'introSUP') {
-        html += '<div class="wf-line" style="flex:0 0 20px; background:#adb5bd;"></div>';
-      } else if (i > 0) {
-        html += '<div class="wf-line"></div>';
-      }
-      html += `<div class="${cls}" title="${title}">${label}</div>`;
+    // Intro SUPERVISOR
+    let cls = 'wf-dot';
+    if (reg.respSup) cls += ' done';
+    if (_wfPaso === 0) cls += ' active';
+    html += `<div class="${cls}" title="Inicio Supervisor">S</div>`;
+    html += '<div class="wf-line"></div>';
+    
+    // Criterios SUPERVISOR
+    critSUPIndices.forEach((idx, posLocal) => {
+      const v = reg.criterios[idx];
+      cls = 'wf-dot';
+      if (v === true) cls += ' done';
+      else if (v === false) cls += ' no';
+      if (_wfPaso === (posLocal + 1)) cls += ' active'; // +1 porque intro es paso 0
+      html += `<div class="${cls}" title="Criterio Supervisor ${posLocal+1}">${String(posLocal + 1)}</div>`;
+      if (posLocal < critSUPIndices.length - 1) html += '<div class="wf-line"></div>';
     });
+    
+    // Final (Observaciones)
+    if (critSUPIndices.length > 0) html += '<div class="wf-line" style="flex:0 0 20px; background:#adb5bd;"></div>';
+    cls = 'wf-dot';
+    if (_wfPaso === (critSUPIndices.length + 1)) cls += ' active';
+    html += `<div class="${cls}" title="Observaciones">F</div>`;
     bar.innerHTML = html;
 
     // Mostrar sólo el step activo
     document.querySelectorAll('.wf-step').forEach(el => el.style.display = 'none');
-    const step = WF_STEPS[_wfPaso];
-    if (step.kind === 'introUAP') {
-      document.querySelector('.wf-step[data-step="introUAP"]').style.display = '';
-    } else if (step.kind === 'introSUP') {
+    
+    if (_wfPaso === 0) {
+      // Intro SUPERVISOR
       document.querySelector('.wf-step[data-step="introSUP"]').style.display = '';
-    } else if (step.kind === 'crit') {
-      const idx = step.idx;
+    } else if (_wfPaso > 0 && _wfPaso <= critSUPIndices.length) {
+      // Criterio SUPERVISOR
+      const idx = critSUPIndices[_wfPaso - 1];
       const crit = CRITERIOS_SUP[idx];
       document.querySelector('.wf-step[data-step="criterio"]').style.display = '';
-      document.getElementById('wfCritTag').textContent = 'Criterio ' + (idx+1) + ' de 9';
+      document.getElementById('wfCritTag').textContent = 'Criterio ' + (_wfPaso) + ' de 3 (SUPERVISOR)';
       document.getElementById('wfCritTexto').textContent = crit.txt;
       const rol = document.getElementById('wfCritRol');
       const box = document.getElementById('wfCritBox');
-      if (crit.rol === 'UAP') {
-        rol.textContent = 'UAP';
-        rol.style.background = '#0d6efd'; rol.style.color = '#fff';
-        box.style.borderLeftColor = '#0d6efd';
-      } else {
-        rol.textContent = 'SUPERVISOR';
-        rol.style.background = 'var(--tel-red)'; rol.style.color = '#fff';
-        box.style.borderLeftColor = 'var(--tel-red)';
-      }
+      rol.textContent = 'SUPERVISOR';
+      rol.style.background = 'var(--tel-red)'; rol.style.color = '#fff';
+      box.style.borderLeftColor = 'var(--tel-red)';
       const v = reg.criterios[idx];
       document.getElementById('wfBtnSi').classList.toggle('sel', v === true);
       document.getElementById('wfBtnNo').classList.toggle('sel', v === false);
-    } else if (step.kind === 'obs') {
+    } else if (_wfPaso === (critSUPIndices.length + 1)) {
+      // Observaciones (final)
       document.querySelector('.wf-step[data-step="obs"]').style.display = '';
-      const resp = reg.criterios.filter(c => c !== null).length;
-      const nSi  = reg.criterios.filter(c => c === true).length;
-      const nNo  = reg.criterios.filter(c => c === false).length;
-      document.getElementById('wfResResp').textContent = resp + ' / 9';
+      document.querySelector('.sup-obs-area label').textContent = 'Observaciones del Supervisor';
+      const critSUPCompletados = critSUPIndices.filter(i => reg.criterios[i] !== null).length;
+      const nSi  = critSUPIndices.filter(i => reg.criterios[i] === true).length;
+      const nNo  = critSUPIndices.filter(i => reg.criterios[i] === false).length;
+      document.getElementById('wfResResp').textContent = critSUPCompletados + ' / 3';
       document.getElementById('wfResSi').textContent = nSi;
       document.getElementById('wfResNo').textContent = nNo;
     }
 
     // Footer
     document.getElementById('wfPasoActual').textContent = _wfPaso + 1;
-    actualizarProgreso(reg.criterios);
+    const critSUPCompletados = critSUPIndices.filter(i => reg.criterios[i] !== null).length;
+    document.getElementById('chkProgreso').textContent = critSUPCompletados + ' / 3';
     document.getElementById('wfBtnAnterior').disabled = (_wfPaso === 0);
-    const enFinal = (_wfPaso === WF_STEPS.length - 1);
+    const enFinal = (_wfPaso === (critSUPIndices.length + 1));
     document.getElementById('wfBtnSiguiente').style.display = enFinal ? 'none' : '';
     document.getElementById('btnGuardarChecklist').style.display = enFinal ? '' : 'none';
   }
 
   function wfSiguiente() {
     if (_uapMode) return wfSiguienteUAP();
+    
     const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
-    const step = WF_STEPS[_wfPaso];
-    if (step.kind === 'introUAP') {
-      const v = document.getElementById('chkRespUAP').value.trim();
-      if (!v) { alert('Ingrese el Responsable UAP para continuar.'); return; }
-      if (reg) reg.respUAP = v;
-    } else if (step.kind === 'introSUP') {
+    const critSUPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'SUP') critSUPIndices.push(i); });
+    
+    if (_wfPaso === 0) {
       const v = document.getElementById('chkRespSup').value.trim();
       if (!v) { alert('Ingrese el Responsable de Supervisión para continuar.'); return; }
       if (reg) reg.respSup = v;
     }
-    if (_wfPaso < WF_STEPS.length - 1) { _wfPaso++; wfRender(); }
+    if (_wfPaso < (critSUPIndices.length + 1)) { 
+      _wfPaso++; 
+      wfRender(); 
+    }
   }
 
   function wfAnterior() {
@@ -978,11 +980,22 @@
 
   function wfResponder(valor) {
     if (_uapMode) return wfResponderUAP(valor);
+    
     const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
-    const step = WF_STEPS[_wfPaso];
-    if (!reg || !step || step.kind !== 'crit') return;
-    reg.criterios[step.idx] = valor;
-    setTimeout(() => { if (_wfPaso < WF_STEPS.length - 1) { _wfPaso++; wfRender(); } else { wfRender(); } }, 180);
+    const critSUPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'SUP') critSUPIndices.push(i); });
+    
+    if (!reg || _wfPaso <= 0 || _wfPaso > critSUPIndices.length) return;
+    const idx = critSUPIndices[_wfPaso - 1];
+    reg.criterios[idx] = valor;
+    setTimeout(() => { 
+      if (_wfPaso < critSUPIndices.length) { 
+        _wfPaso++; 
+        wfRender(); 
+      } else { 
+        wfRender(); 
+      } 
+    }, 180);
     wfRender();
   }
 
@@ -996,27 +1009,38 @@
     if (_uapMode) return guardarChecklistUAP();
     const reg = dbSupervision.find(s => s.ficha === _chkFichaActual);
     if (!reg) return;
-    reg.respUAP        = document.getElementById('chkRespUAP').value.trim();
-    reg.respSup        = document.getElementById('chkRespSup').value.trim();
+    
+    const respSup = document.getElementById('chkRespSup').value.trim();
+    if (!respSup) { alert('Ingrese el Responsable de Supervisión para guardar.'); return; }
+    
+    reg.respSup        = respSup;
     reg.observaciones  = document.getElementById('chkObservaciones').value.trim();
     reg.fechaSup       = new Date().toLocaleDateString('es-CL');
-    const respondidos  = reg.criterios.filter(c => c !== null).length;
-    const hayNo        = reg.criterios.some(c => c === false);
-    if (respondidos < 9) {
-      if (!confirm('Aún quedan ' + (9-respondidos) + ' criterio(s) sin responder. ¿Guardar de todos modos?')) return;
+    
+    // Contar solo criterios SUPERVISOR (rol='SUP')
+    const critSUPIndices = [];
+    CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'SUP') critSUPIndices.push(i); });
+    const respondidos = critSUPIndices.filter(i => reg.criterios[i] !== null).length;
+    const hayNo = critSUPIndices.some(i => reg.criterios[i] === false);
+    
+    if (respondidos < 3) {
+      if (!confirm('Aún quedan ' + (3-respondidos) + ' criterio(s) sin responder. ¿Guardar de todos modos?')) return;
     }
-    if (respondidos === 9 && !hayNo) {
+    
+    if (respondidos === 3 && !hayNo) {
       reg.estado = 'COMPLETA';
     } else if (hayNo || reg.observaciones) {
       reg.estado = 'CON_OBSERVACIONES';
     } else {
       reg.estado = 'PENDIENTE';
     }
+    
     registrarAuditoria('DIGITALIZACIÓN', reg.ficha, reg.paciente, reg.it, {
       profesional: reg.profesional,
       motivo: 'Supervisión registrada',
-      detalle: 'Pauta: ' + reg.estado + (reg.observaciones ? ' — Obs: ' + reg.observaciones.substring(0,60) : '')
+      detalle: 'Estado: ' + reg.estado + (reg.observaciones ? ' — Obs: ' + reg.observaciones.substring(0,60) : '')
     });
+    
     cerrarModalChecklist();
     renderSupervision();
   }
@@ -1061,16 +1085,23 @@
     const tbody = document.getElementById('bodySupervisionUAP');
     if (!tbody) return;
     if (!lista.length) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#888;">No hay registros de pauta UAP para los filtros seleccionados.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:#888;">No hay registros de pauta UAP para los filtros seleccionados.</td></tr>';
       return;
     }
     tbody.innerHTML = lista.map(s => {
       const critUAPIndices = [];
       CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
       const respondidosUAP = critUAPIndices.filter(i => s.criterios[i] !== null).length;
+      const hayNoUAP = critUAPIndices.some(i => s.criterios[i] === false);
       let badgeHtml = '';
-      if (s.respUAP) badgeHtml = '<span class="sup-completa-badge">✓ COMPLETA</span>';
-      else           badgeHtml = '<span class="sup-pendiente-badge">⏳ PENDIENTE</span>';
+      if (s.respUAP) {
+        if (s.estadoUAP === 'CON_OBSERVACIONES') badgeHtml = '<span class="sup-obs-badge">⚠ CON OBS.</span>';
+        else badgeHtml = '<span class="sup-completa-badge">✓ COMPLETA</span>';
+      } else {
+        badgeHtml = '<span class="sup-pendiente-badge">⏳ PENDIENTE</span>';
+      }
+      const obsUAP = s.observacionesUAP ? s.observacionesUAP.substring(0, 50) + (s.observacionesUAP.length > 50 ? '...' : '') : '<span style="color:#aaa;">—</span>';
+      const obsIndicador = (hayNoUAP || (s.observacionesUAP && s.observacionesUAP.trim().length > 0)) ? '<span style="color:#dc3545; font-weight:bold;">📝</span>' : '<span style="color:#aaa;">—</span>';
       return `<tr>
         <td><b>${s.ficha}</b></td>
         <td>${s.it}</td>
@@ -1078,7 +1109,9 @@
         <td style="font-size:11px;">${s.fechaDigit}</td>
         <td style="font-size:11px;">${s.respUAP || '<span style="color:#aaa;">—</span>'}</td>
         <td>${badgeHtml}</td>
-        <td style="text-align:center; font-size:12px; font-weight:700; color:${respondidosUAP<6?'#856404':'#155724'}">${respondidosUAP}/6</td>
+        <td style="text-align:center; font-size:12px; font-weight:700; color:${respondidosUAP<6?'#856404':'#155724'}">${respondidosUAP}/6${hayNoUAP ? ' <span style="color:#dc3545; font-size:14px;">⚠</span>' : ''}</td>
+        
+        <td style="font-size:11px; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${s.observacionesUAP || ''}">${obsUAP}</td>
         <td><button class="btn btn-primary" style="font-size:10px; padding:5px 10px;" onclick="abrirChecklistUAP('${s.ficha}')">
           ${s.respUAP?'Ver / Editar':'Llenar Pauta'}
         </button></td>
@@ -1097,12 +1130,12 @@
     document.getElementById('chkMesSup').textContent    = _labelMes(reg.mes) + ' ' + reg.anio;
     document.getElementById('chkRespUAP').value         = reg.respUAP || '';
     document.getElementById('chkRespSup').value         = reg.respSup || '';
-    document.getElementById('chkObservaciones').value   = reg.observaciones || '';
+    document.getElementById('chkObservaciones').value   = reg.observacionesUAP || '';
     
-    // Calcular pasos UAP: intro + criterios UAP
+    // Calcular pasos UAP: intro + criterios UAP + observaciones
     const critUAPIndices = [];
     CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
-    const totalPasosUAP = 1 + critUAPIndices.length; // intro + criterios
+    const totalPasosUAP = 1 + critUAPIndices.length + 1; // intro + criterios + obs final
     document.getElementById('wfPasoTotal').textContent = totalPasosUAP;
     
     _wfPaso = 0;
@@ -1145,6 +1178,12 @@
       html += `<div class="${cls}" title="Criterio UAP ${posLocal+1}">${String(posLocal + 1)}</div>`;
       if (posLocal < critUAPIndices.length - 1) html += '<div class="wf-line"></div>';
     });
+    
+    // Final (Observaciones UAP)
+    if (critUAPIndices.length > 0) html += '<div class="wf-line" style="flex:0 0 20px; background:#adb5bd;"></div>';
+    cls = 'wf-dot';
+    if (_wfPaso === (critUAPIndices.length + 1)) cls += ' active';
+    html += `<div class="${cls}" title="Observaciones UAP">F</div>`;
     bar.innerHTML = html;
 
     // Mostrar solo el step activo
@@ -1168,6 +1207,16 @@
       const v = reg.criterios[idx];
       document.getElementById('wfBtnSi').classList.toggle('sel', v === true);
       document.getElementById('wfBtnNo').classList.toggle('sel', v === false);
+    } else if (_wfPaso === (critUAPIndices.length + 1)) {
+      // Observaciones UAP
+      document.querySelector('.wf-step[data-step="obs"]').style.display = '';
+      document.querySelector('.sup-obs-area label').textContent = 'Observaciones del UAP';
+      const critUAPCompletados = critUAPIndices.filter(i => reg.criterios[i] !== null).length;
+      const nSi  = critUAPIndices.filter(i => reg.criterios[i] === true).length;
+      const nNo  = critUAPIndices.filter(i => reg.criterios[i] === false).length;
+      document.getElementById('wfResResp').textContent = critUAPCompletados + ' / 6';
+      document.getElementById('wfResSi').textContent = nSi;
+      document.getElementById('wfResNo').textContent = nNo;
     }
 
     // Footer
@@ -1175,7 +1224,7 @@
     const critUAP = critUAPIndices.map(i => reg.criterios[i]).filter(c => c !== null);
     document.getElementById('chkProgreso').textContent = critUAP.length + ' / 6';
     document.getElementById('wfBtnAnterior').disabled = (_wfPaso === 0);
-    const enFinal = (_wfPaso === critUAPIndices.length);
+    const enFinal = (_wfPaso === (critUAPIndices.length + 1));
     document.getElementById('wfBtnSiguiente').style.display = enFinal ? 'none' : '';
     document.getElementById('btnGuardarChecklist').style.display = enFinal ? '' : 'none';
   }
@@ -1190,7 +1239,7 @@
       if (!v) { alert('Ingrese el Responsable UAP para continuar.'); return; }
       if (reg) reg.respUAP = v;
     }
-    if (_wfPaso < critUAPIndices.length) { 
+    if (_wfPaso < (critUAPIndices.length + 1)) { 
       _wfPaso++; 
       wfRenderUAP(); 
     }
@@ -1227,20 +1276,31 @@
     if (!respUAP) { alert('Ingrese el Responsable UAP para guardar.'); return; }
     
     reg.respUAP = respUAP;
+    reg.observacionesUAP = document.getElementById('chkObservaciones').value.trim();
     
     // Contar criterios UAP completados
     const critUAPIndices = [];
     CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'UAP') critUAPIndices.push(i); });
     const respondidos = critUAPIndices.filter(i => reg.criterios[i] !== null).length;
+    const hayNo = critUAPIndices.some(i => reg.criterios[i] === false);
     
     if (respondidos < 6) {
       if (!confirm('Aún quedan ' + (6-respondidos) + ' criterio(s) sin responder. ¿Guardar de todos modos?')) return;
     }
     
+    // Calcular estado UAP
+    if (respondidos === 6 && !hayNo) {
+      reg.estadoUAP = 'COMPLETA';
+    } else if (hayNo || reg.observacionesUAP) {
+      reg.estadoUAP = 'CON_OBSERVACIONES';
+    } else {
+      reg.estadoUAP = 'PENDIENTE';
+    }
+    
     registrarAuditoria('DIGITALIZACIÓN', reg.ficha, reg.paciente, reg.it, {
       profesional: reg.profesional,
       motivo: 'Pauta UAP completada',
-      detalle: 'Responsable: ' + respUAP + ' — Criterios: ' + respondidos + '/6'
+      detalle: 'Responsable: ' + respUAP + ' — Criterios: ' + respondidos + '/6' + (reg.observacionesUAP ? ' — Obs: ' + reg.observacionesUAP.substring(0, 50) : '')
     });
     
     cerrarModalChecklist();
@@ -1306,12 +1366,16 @@
     const tbody = document.getElementById('bodySupervision');
     if (!tbody) return;
     if (!lista.length) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#888;">No hay registros de supervisión para los filtros seleccionados.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px; color:#888;">No hay registros de supervisión para los filtros seleccionados.</td></tr>';
       return;
     }
     tbody.innerHTML = lista.map(s => {
-      const respondidos = s.criterios.filter(c => c !== null).length;
-      const hayNo = s.criterios.some(c => c === false);
+      const critSUPIndices = [];
+      CRITERIOS_SUP.forEach((c, i) => { if (c.rol === 'SUP') critSUPIndices.push(i); });
+      const respondidosSUP = critSUPIndices.filter(i => s.criterios[i] !== null).length;
+      const hayNo = critSUPIndices.some(i => s.criterios[i] === false);
+      const obsSup = s.observaciones ? s.observaciones.substring(0, 50) + (s.observaciones.length > 50 ? '...' : '') : '<span style="color:#aaa;">—</span>';
+      const obsIndicador = (hayNo || s.observaciones) ? '<span style="color:#dc3545; font-weight:bold;">📝</span>' : '<span style="color:#aaa;">—</span>';
       let badgeEstadoUAP = '';
       if (s.respUAP) badgeEstadoUAP = '<span class="sup-completa-badge">✓ Completada</span>';
       else           badgeEstadoUAP = '<span class="sup-pendiente-badge">⏳ Pendiente</span>';
@@ -1325,9 +1389,10 @@
         <td>${s.paciente}</td>
         <td style="font-size:11px;">${s.fechaDigit}</td>
         <td style="font-size:11px;">${s.respUAP || '<span style="color:#aaa;">—</span>'}</td>
-        <td>${badgeEstadoUAP}</td>
         <td style="font-size:11px;">${s.respSup || '<span style="color:#aaa;">—</span>'}</td>
-        <td style="text-align:center; font-size:12px; font-weight:700; color:${respondidos<9?'#856404':'#155724'}">${respondidos}/9 ${hayNo?'<span style="color:#dc3545;">⚠</span>':''}</td>
+        <td style="text-align:center; font-size:12px; font-weight:700; color:${respondidosSUP<3?'#856404':'#155724'}">${respondidosSUP}/3${hayNo ? ' <span style="color:#dc3545; font-size:14px;">⚠</span>' : ''}</td>
+        
+        <td style="font-size:11px; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${s.observaciones || ''}">${obsSup}</td>
         <td>${badgeHtml}</td>
         <td><button class="btn btn-primary" style="font-size:10px; padding:5px 10px;" onclick="abrirChecklist('${s.ficha}')">
           ${s.respUAP ? 'Supervisar' : 'Esperar UAP'}
@@ -1580,7 +1645,7 @@
     if (btn) btn.style.outline = '3px solid #212529';
     const cfg = {
       'SCANNER':     { titInv: 'Fichas SFD disponibles para Digitalización',   cart: 'SOLICITAR DIGITALIZACIÓN', api: false, motivo: true  },
-      'DESTRUCCION': { titInv: 'Fichas Pasivas elegibles para Baja',     cart: 'SOLICITAR BAJA DOCUMENTAL',    api: false, motivo: true  }
+      'DESTRUCCION': { titInv: 'Fichas Pasivas elegibles para Baja',     cart: 'SOLICITAR ELIMINACIÓN SFD',    api: false, motivo: true  }
     }[modo];
     document.getElementById('panelConfig').className = 'panel-right-cus mode-' + (modo === 'RETIRO' ? 'RETIRO' : 'REINTEGRO');
     document.getElementById('tituloInventario').innerText = cfg.titInv;
@@ -1590,7 +1655,7 @@
     document.getElementById('motivoBox').style.display = cfg.motivo ? 'block' : 'none';
     const mo = document.getElementById('motivoOperacion'); if (mo) mo.value = '';
     const btnFin = document.getElementById('btnFinalizar');
-    btnFin.innerText = (modo === 'DESTRUCCION') ? 'Confirmar Baja Documental' : 'Confirmar Envío a Scanner';
+    btnFin.innerText = (modo === 'DESTRUCCION') ? 'Confirmar Eliminacion SFD' : 'Confirmar Envío a Scanner';
     renderTablaCustodio();
     renderCarritoCustodio();
   }
@@ -1658,7 +1723,7 @@
     div.innerHTML = carritoCustodio.map((item, idx) => {
       let extra = '';
       if (modoActualCustodio === 'SCANNER')     extra = '<span class="estado-badge est-scanner">SCANNER</span>';
-      else if (modoActualCustodio === 'DESTRUCCION') extra = '<span class="estado-badge est-destruida">BAJA DOCUMENTAL</span>';
+      else if (modoActualCustodio === 'DESTRUCCION') extra = '<span class="estado-badge est-destruida">ELIMINACIÓN SFD</span>';
       return `
       <div class="cart-item">
         <div style="font-size:11px"><b>${item.f}</b><br>${item.p}</div>
@@ -1679,7 +1744,7 @@
       return alert('Debe indicar el motivo / observación.');
     }
     if (modoActualCustodio === 'DESTRUCCION') {
-      if (!confirm(`¿Confirma la BAJA DOCUMENTAL de ${carritoCustodio.length} ficha(s)? Esta acción es irreversible.`)) return;
+      if (!confirm(`¿Confirma la ELIMINACIÓN SFD de ${carritoCustodio.length} ficha(s)? Esta acción es irreversible.`)) return;
     }
     const hoy = new Date().toLocaleDateString('es-CL');
     if (modoActualCustodio === 'SCANNER') {
@@ -1788,7 +1853,7 @@
     'ACTIVA':       { lbl: 'Ficha Activa',       cls: 'est-activa',    card: 'ec-activa' },
     'DIGITALIZADA': { lbl: 'Ficha Digitalizada', cls: 'est-digital',   card: 'ec-digital' },
     'EN_SCANNER':   { lbl: 'En Scanner',         cls: 'est-scanner',   card: 'ec-scanner' },
-    'DESTRUIDA':    { lbl: 'Baja Documental',    cls: 'est-destruida', card: 'ec-destruida' }
+    'DESTRUIDA':    { lbl: 'Eliminacion SFD',    cls: 'est-destruida', card: 'ec-destruida' }
   };
 
   function renderEstadoFichas() {
@@ -1918,7 +1983,7 @@
     'SOLICITUD':      { color: '#d4edda', texto: '#155724', label: 'Nueva Solicitud' },
     'DIGITALIZACIÓN': { color: '#cce5ff', texto: '#004085', label: 'Digitalización'  },
     'SCANNER':        { color: '#e2d9f3', texto: '#4b2a87', label: 'Envío a Scanner' },
-    'DESTRUCCIÓN':    { color: '#f8d7da', texto: '#721c24', label: 'Baja Documental' }
+    'DESTRUCCIÓN':    { color: '#f8d7da', texto: '#721c24', label: 'Eliminacion SFD' }
   };
 
   function _usuarioActual() {
@@ -1986,7 +2051,7 @@
         registrarAuditoria('DESTRUCCIÓN', c.f, c.p, c.it, {
           profesional: '—',
           motivo: motivo || 'N/A',
-          detalle: 'Baja documental confirmada'
+          detalle: 'Eliminacion SFD confirmada'
         });
       }
     });
